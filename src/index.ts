@@ -12,9 +12,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Range",
 };
 
-// ==========================================
-// 🎨 WEBSITE FRONTEND (HTML)
-// ==========================================
 const htmlPage = `
 <!DOCTYPE html>
 <html lang="en">
@@ -68,6 +65,13 @@ const htmlPage = `
                     <span>📺</span> Play Online
                 </a>
             </div>
+            
+            <div id="player-container" class="hidden mt-4">
+                <video id="videoPlayer" controls class="w-full rounded-lg shadow-lg">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+
             <p class="text-[10px] text-gray-500 mt-4">* Video will be proxied securely through server.</p>
         </div>
 
@@ -81,6 +85,11 @@ const htmlPage = `
             document.getElementById('loading').classList.remove('hidden');
             document.getElementById('result').classList.add('hidden');
             document.getElementById('error').classList.add('hidden');
+            document.getElementById('player-container').classList.add('hidden');
+            const videoElement = document.getElementById('videoPlayer');
+            videoElement.pause();
+            videoElement.removeAttribute('src');
+            
             document.getElementById('btn').disabled = true;
             document.getElementById('btn').classList.add('opacity-50');
 
@@ -97,10 +106,16 @@ const htmlPage = `
                     document.getElementById('filename').innerText = data.filename || 'Unknown File';
                     document.getElementById('size').innerText = 'Size: ' + (data.size || 'N/A');
                     
-                    // YAHAN MAGIC HAI: Direct link ki jagah hum Proxy link use kar rahe hain
-                    const proxyUrl = "/proxy?url=" + encodeURIComponent(data.download);
-                    document.getElementById('downloadBtn').href = proxyUrl;
-                    document.getElementById('streamBtn').href = proxyUrl;
+                    // Download link waisa hi rahega (Original link ya fir Proxy without play override)
+                    document.getElementById('downloadBtn').href = data.download;
+                    
+                    // Stream ke liye proxy URL banayenge jisme action=play laga hoga
+                    const streamUrl = "/proxy?url=" + encodeURIComponent(data.stream) + "&action=play";
+                    document.getElementById('streamBtn').href = streamUrl;
+
+                    // Web Player mein video set karke dikhana
+                    videoElement.src = streamUrl;
+                    document.getElementById('player-container').classList.remove('hidden');
 
                     if(data.thumbs && data.thumbs.url1) {
                         const img = document.getElementById('thumb');
@@ -141,10 +156,12 @@ Bun.serve({
     }
 
     // ==========================================
-    // 🛡️ NAYA PROXY ROUTE (Bypasses Error 31326)
+    // 🛡️ PROXY ROUTE (Fixes Download/Stream Issue)
     // ==========================================
     if (pathname === "/proxy") {
       const targetUrl = url.searchParams.get("url");
+      const action = url.searchParams.get("action"); // 'play' action stream ke liye check karenge
+      
       if (!targetUrl) return new Response("Missing URL", { status: 400 });
 
       const cookies = loadCookies();
@@ -156,7 +173,6 @@ Bun.serve({
         fetchHeaders.set("Cookie", `ndus=${ndusCookie}`);
       }
       
-      // Video aage-peeche (seek) karne ke liye Range header pass karna zaroori hai
       const range = req.headers.get("Range");
       if (range) {
         fetchHeaders.set("Range", range);
@@ -167,6 +183,17 @@ Bun.serve({
         const resHeaders = new Headers(proxyRes.headers);
         resHeaders.set("Access-Control-Allow-Origin", "*");
         
+        // ✨ THE MAGIC TRICK: Agar action 'play' hai, toh force download ko hata do aur video format daal do
+        if (action === "play") {
+            resHeaders.delete("content-disposition"); // "download karlo" wali command delete!
+            
+            // Browser ko batana ki ye file mp4 video hai
+            const currentType = resHeaders.get("content-type") || "";
+            if (!currentType.includes("video")) {
+                resHeaders.set("content-type", "video/mp4");
+            }
+        }
+
         return new Response(proxyRes.body, {
           status: proxyRes.status,
           headers: resHeaders
