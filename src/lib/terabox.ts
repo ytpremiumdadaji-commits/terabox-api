@@ -8,8 +8,6 @@ export async function tera(surl: string): Promise<any> {
 
   const cookies = loadCookies();
   let ndusCookie = cookies["ndus"];
-  console.log("[DEBUG] Loaded ndus cookie:", ndusCookie);
-
   const cookieString = `ndus=${ndusCookie}`;
 
   const headers = {
@@ -24,19 +22,25 @@ export async function tera(surl: string): Promise<any> {
     const response = await fetch(first_url, { headers });
     const text = await response.text();
 
+    // Step 1: Page se jsToken aur baaki hidden keys nikalna
     const match = text.match(/fn%28%22(.*?)%22%29/);
     if (!match) {
       return {
-        error:
-          "Failed to extract jsToken. Verification might be required or Cloudflare blocked the request.",
+        error: "Failed to extract jsToken. Verification might be required.",
       };
     }
     const jsToken = match[1];
 
+    // Naye keys jo download link ke liye chahiye
+    const signMatch = text.match(/"sign":"([^"]+)"/);
+    const timestampMatch = text.match(/"timestamp":(\d+)/);
+    const shareidMatch = text.match(/"shareid":(\d+)/);
+    const ukMatch = text.match(/"uk":(\d+)/);
+
+    // Step 2: File ki Basic Details nikalna (Naam, Size, ID)
     const api_url = new URL("https://dm.terabox.app/share/list");
     api_url.searchParams.append("app_id", "250528");
     api_url.searchParams.append("jsToken", jsToken);
-    api_url.searchParams.append("site_referer", "https://www.terabox.app/");
     api_url.searchParams.append("shorturl", short_url);
     api_url.searchParams.append("root", "1");
 
@@ -44,20 +48,51 @@ export async function tera(surl: string): Promise<any> {
       Host: "dm.terabox.app",
       "User-Agent": headers["User-Agent"],
       Accept: "application/json, text/plain, */*",
-      "Accept-Language": "en-US,en;q=0.9",
-      "X-Requested-With": "XMLHttpRequest",
-      Referer: `https://dm.terabox.app/sharing/link?surl=${short_url}&clearCache=1`,
-      "Content-Type": "application/x-www-form-urlencoded",
-      Origin: "https://dm.terabox.app",
+      Referer: first_url,
       Cookie: cookieString,
     };
 
-    const api_response = await fetch(api_url.toString(), {
+    const list_response = await fetch(api_url.toString(), {
       headers: api_headers,
     });
-    const data = await api_response.json();
+    const list_data = await list_response.json();
 
-    return data;
+    if (!list_data || !list_data.list || list_data.list.length === 0) {
+      return list_data; 
+    }
+
+    let fileItem = list_data.list[0];
+
+    // Step 3: Agar dlink nahi mila, toh zabardasti Download Link generate karna
+    if (!fileItem.dlink && signMatch && timestampMatch && shareidMatch && ukMatch) {
+      const fs_id = fileItem.fs_id;
+      
+      const dl_url = new URL("https://dm.terabox.app/share/download");
+      dl_url.searchParams.append("app_id", "250528");
+      dl_url.searchParams.append("web", "1");
+      dl_url.searchParams.append("channel", "dubox");
+      dl_url.searchParams.append("jsToken", jsToken);
+      dl_url.searchParams.append("sign", signMatch[1]);
+      dl_url.searchParams.append("timestamp", timestampMatch[1]);
+      dl_url.searchParams.append("shareid", shareidMatch[1]);
+      dl_url.searchParams.append("uk", ukMatch[1]);
+      dl_url.searchParams.append("primaryid", shareidMatch[1]);
+      dl_url.searchParams.append("fid_list", `[${fs_id}]`);
+
+      const dl_response = await fetch(dl_url.toString(), {
+        headers: api_headers,
+      });
+      const dl_data = await dl_response.json();
+
+      // Download data ko main file item ke sath jodna
+      if (dl_data.dlink) {
+        fileItem.dlink = dl_data.dlink;
+      } else if (dl_data.list && dl_data.list.length > 0 && dl_data.list[0].dlink) {
+        fileItem.dlink = dl_data.list[0].dlink;
+      }
+    }
+
+    return { list: [fileItem] };
   } catch (error: any) {
     return { error: String(error) };
   }
