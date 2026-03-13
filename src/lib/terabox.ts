@@ -1,14 +1,11 @@
-import { loadCookies } from "./utils";
-
-export async function tera(surl: string): Promise<any> {
+export async function tera(surl: string, ndusCookie: string): Promise<any> {
   let short_url = surl;
   if (surl.startsWith("1")) {
     short_url = surl.substring(1);
   }
 
-  const cookies = loadCookies();
-  let ndusCookie = cookies["ndus"];
-  const cookieString = `ndus=${ndusCookie}`;
+  // ✅ Ab ye function direct passed cookie use karega
+  const cookieString = "ndus=" + ndusCookie;
 
   const headers = {
     "User-Agent":
@@ -81,18 +78,16 @@ export async function tera(surl: string): Promise<any> {
         raw_dlink = dl_data.list[0].dlink;
       }
 
-      // ===== NAYA BYPASS: ASLI VIDEO LINK NIKALNA =====
       if (raw_dlink) {
         try {
-          // Humara server pehle us link par jayega aur redirect hone wale asli link ko pakad lega
           const redirectRes = await fetch(raw_dlink, {
             headers: api_headers,
-            redirect: "manual" // Automatic redirect rok kar location nikalenge
+            redirect: "manual" 
           });
           
           const realLink = redirectRes.headers.get("location");
           if (realLink) {
-            fileItem.dlink = realLink; // Asli link jo browser/VLC me chalega
+            fileItem.dlink = realLink; 
           } else {
             fileItem.dlink = raw_dlink;
           }
