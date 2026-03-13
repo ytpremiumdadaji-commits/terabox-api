@@ -1,0 +1,17 @@
+{
+  "name": "terabox-dl-ts",
+  "version": "1.0.0",
+  "description": "TeraBox Downloader API",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "bun src/index.ts",
+    "dev": "bun --watch src/index.ts"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.0",
+    "typescript": "^5.0.0"
+  }
+}
