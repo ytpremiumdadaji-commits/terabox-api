@@ -13,7 +13,7 @@ const corsHeaders = {
 };
 
 // ==========================================
-// 🎨 FRONTEND WITH RESET BUTTON & FAST PLAYER
+// 🎨 PREMIUM FRONTEND WITH ARTPLAYER
 // ==========================================
 const htmlPage = `
 <!DOCTYPE html>
@@ -23,20 +23,13 @@ const htmlPage = `
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TeraBox Stream & Download</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
         .glass-card { background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        
-        video {
-            width: 100%;
-            height: auto;
-            border-top-left-radius: 1rem;
-            border-top-right-radius: 1rem;
-            background-color: #000;
-            outline: none;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-        }
+        .artplayer-app { width: 100%; height: 250px; border-top-left-radius: 1rem; border-top-right-radius: 1rem; z-index: 10; }
+        @media (min-width: 640px) { .artplayer-app { height: 350px; } }
     </style>
 </head>
 <body class="text-white min-h-screen flex flex-col items-center py-10 px-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black">
@@ -47,7 +40,7 @@ const htmlPage = `
             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">TeraBox</span> Player
             </h1>
-            <p class="text-slate-400 text-sm md:text-base font-medium">Fast Stream & Direct Download. No Ads, No Waiting.</p>
+            <p class="text-slate-400 text-sm md:text-base font-medium">Ultra-Fast Direct CDN Stream. No Ads, No Buffering.</p>
         </div>
 
         <div id="searchSection" class="glass-card rounded-2xl shadow-2xl p-2 flex flex-col sm:flex-row gap-2 mb-8 relative transition-all">
@@ -72,21 +65,16 @@ const htmlPage = `
 
         <div id="loading" class="hidden flex flex-col items-center justify-center py-10">
             <div class="w-10 h-10 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-            <p class="text-slate-400 font-medium animate-pulse">Extracting premium links...</p>
+            <p class="text-slate-400 font-medium animate-pulse">Bypassing Servers for Max Speed...</p>
         </div>
 
         <div id="error" class="hidden mb-6 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-xl flex items-center gap-3">
-            <svg class="w-6 h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <p id="errorText" class="text-sm font-medium"></p>
         </div>
 
         <div id="resultCard" class="hidden glass-card rounded-2xl shadow-2xl flex flex-col transform transition-all">
             
-            <div class="w-full bg-black rounded-t-2xl relative">
-                <video id="player" playsinline controls preload="auto" poster="">
-                    Your browser does not support the video tag.
-                </video>
-            </div>
+            <div id="artplayer-container" class="artplayer-app bg-black"></div>
 
             <div class="p-6 relative">
                 <div class="mb-6">
@@ -94,14 +82,14 @@ const htmlPage = `
                     <div class="flex items-center gap-3 mt-2 text-sm text-slate-400 font-medium">
                         <span id="size" class="bg-slate-800 px-2 py-1 rounded-md text-blue-400"></span>
                         <span class="flex items-center gap-1">
-                            <svg class="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            Secure Proxy
+                            <svg class="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            Direct CDN Fast
                         </span>
                     </div>
                 </div>
 
                 <div class="flex flex-col sm:flex-row gap-3">
-                    <button id="watchBtn" onclick="playVideo()" 
+                    <button onclick="playVideo()" 
                         class="flex-1 bg-white hover:bg-slate-200 text-slate-900 font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
                         Watch Now
@@ -124,19 +112,47 @@ const htmlPage = `
     </div>
 
     <script>
-        const player = document.getElementById('player');
+        let art = null;
+
+        function initPlayer(url, poster) {
+            if (art) { art.destroy(); }
+            art = new Artplayer({
+                container: '#artplayer-container',
+                url: url,
+                poster: poster,
+                volume: 0.8,
+                isLive: false,
+                muted: false,
+                autoplay: false,
+                pip: true,
+                autoSize: true,
+                autoMini: true,
+                screenshot: true,
+                setting: true,
+                loop: false,
+                flip: true,
+                playbackRate: true,
+                aspectRatio: true,
+                fullscreen: true,
+                fullscreenWeb: true,
+                subtitleOffset: true,
+                miniProgressBar: true,
+                mutex: true,
+                backdrop: true,
+                playsInline: true,
+                autoPlayback: true,
+                airplay: true,
+                theme: '#3b82f6',
+            });
+        }
 
         function playVideo() {
-            player.play();
+            if(art) { art.play(); }
             document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        // RESET FUNCTION (Wapas naya link daalne ke liye)
         function resetUI() {
-            player.pause();
-            player.removeAttribute('src');
-            player.load();
-            
+            if(art) { art.destroy(); art = null; }
             document.getElementById('link').value = '';
             document.getElementById('resultCard').classList.add('hidden');
             document.getElementById('searchSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -153,9 +169,6 @@ const htmlPage = `
             btn.disabled = true;
             btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>';
 
-            player.pause();
-            player.removeAttribute('src');
-
             try {
                 const res = await fetch('/api?url=' + encodeURIComponent(link));
                 const data = await res.json();
@@ -171,6 +184,7 @@ const htmlPage = `
                     document.getElementById('filename').innerText = actualFilename;
                     document.getElementById('size').innerText = data.size || 'N/A';
                     
+                    // Naya: Proxy ke through perfect Range headers pass honge
                     const downloadUrl = "/proxy?url=" + encodeURIComponent(data.download) + "&name=" + encodeURIComponent(actualFilename);
                     const streamUrl = "/proxy?url=" + encodeURIComponent(data.stream) + "&action=play&name=" + encodeURIComponent(actualFilename);
                     
@@ -180,8 +194,9 @@ const htmlPage = `
                     if (data.thumbs) {
                         bestThumb = data.thumbs.url3 || data.thumbs.url2 || data.thumbs.url1 || '';
                     }
-                    player.poster = bestThumb;
-                    player.src = streamUrl;
+                    
+                    // Initialize Fast Player
+                    initPlayer(streamUrl, bestThumb);
 
                 } else {
                     document.getElementById('errorText').innerText = data.message || data.error || "Failed to fetch video.";
@@ -217,12 +232,11 @@ Bun.serve({
     }
 
     // ==========================================
-    // 🛡️ OPTIMIZED PROXY ROUTE (Speed & Chunking Fix)
+    // 🛡️ ADVANCED PROXY (Copies True Headers for Fast Stream)
     // ==========================================
     if (pathname === "/proxy") {
       const targetUrl = url.searchParams.get("url");
       const action = url.searchParams.get("action");
-      
       const fileNameRaw = url.searchParams.get("name") || "TeraBox_Video.mp4";
       const safeFileName = fileNameRaw.replace(/"/g, ''); 
       
@@ -234,30 +248,36 @@ Bun.serve({
       const fetchHeaders = new Headers();
       fetchHeaders.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/145.0.0.0 Safari/537.36");
       if (ndusCookie) {
-        fetchHeaders.set("Cookie", `ndus=${ndusCookie}`);
+        fetchHeaders.set("Cookie", \`ndus=\${ndusCookie}\`);
       }
       
-      // Range Header ko theek se forward karna taaki chunks mein fast load ho
+      // ✅ Buffering theek karne ki sabse main line:
       const range = req.headers.get("Range");
       if (range) {
         fetchHeaders.set("Range", range);
       }
 
       try {
-        const proxyRes = await fetch(targetUrl, { headers: fetchHeaders, method: req.method });
+        // 'follow' karne se ye Asli CDN server par pahuch jata hai
+        const proxyRes = await fetch(targetUrl, { 
+            headers: fetchHeaders, 
+            method: req.method,
+            redirect: "follow" 
+        });
         
-        // Response headers ko exactly copy karna speed ke liye zaroori hai
         const resHeaders = new Headers();
-        for (const [key, value] of proxyRes.headers.entries()) {
-            resHeaders.set(key, value);
-        }
+        // Copy ONLY necessary headers to avoid conflicts
+        const allowedHeaders = ['content-length', 'content-range', 'accept-ranges', 'content-type'];
+        proxyRes.headers.forEach((value, key) => {
+            if (allowedHeaders.includes(key.toLowerCase())) {
+                resHeaders.set(key, value);
+            }
+        });
         
         resHeaders.set("Access-Control-Allow-Origin", "*");
         
         if (action === "play") {
-            resHeaders.delete("content-disposition"); 
-            const currentType = resHeaders.get("content-type") || "";
-            if (!currentType.includes("video")) {
+            if (!resHeaders.has("content-type") || !resHeaders.get("content-type")?.includes("video")) {
                 resHeaders.set("content-type", "video/mp4");
             }
         } else {
