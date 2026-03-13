@@ -22,22 +22,17 @@ export async function tera(surl: string): Promise<any> {
     const response = await fetch(first_url, { headers });
     const text = await response.text();
 
-    // Step 1: Page se jsToken aur baaki hidden keys nikalna
     const match = text.match(/fn%28%22(.*?)%22%29/);
     if (!match) {
-      return {
-        error: "Failed to extract jsToken. Verification might be required.",
-      };
+      return { error: "Failed to extract jsToken. Verification might be required." };
     }
     const jsToken = match[1];
 
-    // Naye keys jo download link ke liye chahiye
     const signMatch = text.match(/"sign":"([^"]+)"/);
     const timestampMatch = text.match(/"timestamp":(\d+)/);
     const shareidMatch = text.match(/"shareid":(\d+)/);
     const ukMatch = text.match(/"uk":(\d+)/);
 
-    // Step 2: File ki Basic Details nikalna (Naam, Size, ID)
     const api_url = new URL("https://dm.terabox.app/share/list");
     api_url.searchParams.append("app_id", "250528");
     api_url.searchParams.append("jsToken", jsToken);
@@ -52,9 +47,7 @@ export async function tera(surl: string): Promise<any> {
       Cookie: cookieString,
     };
 
-    const list_response = await fetch(api_url.toString(), {
-      headers: api_headers,
-    });
+    const list_response = await fetch(api_url.toString(), { headers: api_headers });
     const list_data = await list_response.json();
 
     if (!list_data || !list_data.list || list_data.list.length === 0) {
@@ -63,7 +56,6 @@ export async function tera(surl: string): Promise<any> {
 
     let fileItem = list_data.list[0];
 
-    // Step 3: Agar dlink nahi mila, toh zabardasti Download Link generate karna
     if (!fileItem.dlink && signMatch && timestampMatch && shareidMatch && ukMatch) {
       const fs_id = fileItem.fs_id;
       
@@ -79,16 +71,34 @@ export async function tera(surl: string): Promise<any> {
       dl_url.searchParams.append("primaryid", shareidMatch[1]);
       dl_url.searchParams.append("fid_list", `[${fs_id}]`);
 
-      const dl_response = await fetch(dl_url.toString(), {
-        headers: api_headers,
-      });
+      const dl_response = await fetch(dl_url.toString(), { headers: api_headers });
       const dl_data = await dl_response.json();
 
-      // Download data ko main file item ke sath jodna
+      let raw_dlink = null;
       if (dl_data.dlink) {
-        fileItem.dlink = dl_data.dlink;
+        raw_dlink = dl_data.dlink;
       } else if (dl_data.list && dl_data.list.length > 0 && dl_data.list[0].dlink) {
-        fileItem.dlink = dl_data.list[0].dlink;
+        raw_dlink = dl_data.list[0].dlink;
+      }
+
+      // ===== NAYA BYPASS: ASLI VIDEO LINK NIKALNA =====
+      if (raw_dlink) {
+        try {
+          // Humara server pehle us link par jayega aur redirect hone wale asli link ko pakad lega
+          const redirectRes = await fetch(raw_dlink, {
+            headers: api_headers,
+            redirect: "manual" // Automatic redirect rok kar location nikalenge
+          });
+          
+          const realLink = redirectRes.headers.get("location");
+          if (realLink) {
+            fileItem.dlink = realLink; // Asli link jo browser/VLC me chalega
+          } else {
+            fileItem.dlink = raw_dlink;
+          }
+        } catch(e) {
+          fileItem.dlink = raw_dlink;
+        }
       }
     }
 
