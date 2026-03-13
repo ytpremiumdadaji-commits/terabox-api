@@ -13,7 +13,7 @@ const corsHeaders = {
 };
 
 // ==========================================
-// 🎨 PREMIUM FRONTEND WITH ARTPLAYER
+// 🎨 PREMIUM FRONTEND WITH PERFECT FIT PLAYER
 // ==========================================
 const htmlPage = `
 <!DOCTYPE html>
@@ -28,8 +28,23 @@ const htmlPage = `
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
         .glass-card { background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .artplayer-app { width: 100%; height: 250px; border-top-left-radius: 1rem; border-top-right-radius: 1rem; z-index: 10; }
-        @media (min-width: 640px) { .artplayer-app { height: 350px; } }
+        
+        /* ✅ YAHAN FIX KIYA HAI: Perfect 16:9 Aspect Ratio like YouTube */
+        .artplayer-app { 
+            width: 100%; 
+            aspect-ratio: 16 / 9; /* Video shape automatically adjust hogi */
+            height: auto; 
+            max-height: 70vh;
+            border-top-left-radius: 1rem; 
+            border-top-right-radius: 1rem; 
+            z-index: 10; 
+            background-color: #000;
+        }
+        
+        /* Video ko box ke andar perfectly contain karne ke liye */
+        .artplayer-video {
+            object-fit: contain !important;
+        }
     </style>
 </head>
 <body class="text-white min-h-screen flex flex-col items-center py-10 px-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black">
@@ -125,7 +140,7 @@ const htmlPage = `
                 muted: false,
                 autoplay: false,
                 pip: true,
-                autoSize: true,
+                autoSize: false, // CSS ko control karne do
                 autoMini: true,
                 screenshot: true,
                 setting: true,
@@ -242,8 +257,6 @@ Bun.serve({
 
       const fetchHeaders = new Headers();
       fetchHeaders.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/145.0.0.0 Safari/537.36");
-      
-      // ✅ YE THA MAIN FIX: Safe String Concatenation (No escaped backticks)
       if (ndusCookie) {
         fetchHeaders.set("Cookie", "ndus=" + ndusCookie);
       }
