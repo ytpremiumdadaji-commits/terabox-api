@@ -13,46 +13,70 @@ const corsHeaders = {
 };
 
 // ==========================================
-// 🎨 PREMIUM FRONTEND WITH PERFECT FIT PLAYER
+// 📱 APP MANIFEST & SERVICE WORKER (PWA)
+// ==========================================
+const manifestJson = {
+  name: "TeraBox Player Pro",
+  short_name: "TeraPlayer",
+  description: "Fast Stream & Direct Download TeraBox Videos",
+  start_url: "/",
+  display: "standalone",
+  background_color: "#0f172a",
+  theme_color: "#3b82f6",
+  icons: [
+    {
+      src: "https://cdn-icons-png.flaticon.com/512/2985/2985679.png", // Mast Cloud Download Icon
+      sizes: "512x512",
+      type: "image/png",
+      purpose: "any maskable"
+    }
+  ]
+};
+
+const serviceWorkerJs = `
+self.addEventListener('install', (e) => {
+  self.skipWaiting();
+});
+self.addEventListener('fetch', (e) => {
+  // Pass through everything, we just need SW for installability
+});
+`;
+
+// ==========================================
+// 🎨 FRONTEND HTML
 // ==========================================
 const htmlPage = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TeraBox Stream & Download</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2985/2985679.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; -webkit-tap-highlight-color: transparent; }
         .glass-card { background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        
-        /* ✅ YAHAN FIX KIYA HAI: Perfect 16:9 Aspect Ratio like YouTube */
-        .artplayer-app { 
-            width: 100%; 
-            aspect-ratio: 16 / 9; /* Video shape automatically adjust hogi */
-            height: auto; 
-            max-height: 70vh;
-            border-top-left-radius: 1rem; 
-            border-top-right-radius: 1rem; 
-            z-index: 10; 
-            background-color: #000;
-        }
-        
-        /* Video ko box ke andar perfectly contain karne ke liye */
-        .artplayer-video {
-            object-fit: contain !important;
-        }
+        .artplayer-app { width: 100%; aspect-ratio: 16/9; height: auto; max-height: 70vh; border-top-left-radius: 1rem; border-top-right-radius: 1rem; z-index: 10; background-color: #000; }
+        .artplayer-video { object-fit: contain !important; }
     </style>
 </head>
-<body class="text-white min-h-screen flex flex-col items-center py-10 px-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black">
+<body class="text-white min-h-screen flex flex-col items-center py-6 px-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black">
     
     <div class="max-w-2xl w-full relative z-10">
         
-        <div class="text-center mb-10">
-            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
+        <button id="installAppBtn" class="hidden w-full mb-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 transition-all active:scale-95 animate-bounce">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Install App to Home Screen
+        </button>
+
+        <div class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">
                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">TeraBox</span> Player
             </h1>
             <p class="text-slate-400 text-sm md:text-base font-medium">Ultra-Fast Direct CDN Stream. No Ads, No Buffering.</p>
@@ -67,7 +91,7 @@ const htmlPage = `
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
                     </div>
-                    <input type="url" id="link" placeholder="Paste your TeraBox link here..." 
+                    <input type="url" id="link" placeholder="Paste TeraBox link here..." 
                         class="w-full pl-11 pr-4 py-4 rounded-xl bg-slate-800/80 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
                 </div>
                 <button onclick="getLinks()" id="searchBtn" 
@@ -91,8 +115,8 @@ const htmlPage = `
             
             <div id="artplayer-container" class="artplayer-app bg-black"></div>
 
-            <div class="p-6 relative">
-                <div class="mb-6">
+            <div class="p-5 sm:p-6 relative">
+                <div class="mb-5">
                     <h3 id="filename" class="text-lg md:text-xl font-bold text-white line-clamp-2 leading-tight"></h3>
                     <div class="flex items-center gap-3 mt-2 text-sm text-slate-400 font-medium">
                         <span id="size" class="bg-slate-800 px-2 py-1 rounded-md text-blue-400"></span>
@@ -127,6 +151,38 @@ const htmlPage = `
     </div>
 
     <script>
+        // --- SERVICE WORKER & PWA INSTALL LOGIC ---
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then(() => {
+                console.log('Service Worker Registered');
+            });
+        }
+
+        let deferredPrompt;
+        const installBtn = document.getElementById('installAppBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.classList.remove('hidden'); // Show install button
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt !== null) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    deferredPrompt = null;
+                    installBtn.classList.add('hidden');
+                }
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installBtn.classList.add('hidden'); // Hide button after install
+        });
+        // ------------------------------------------
+
         let art = null;
 
         function initPlayer(url, poster) {
@@ -140,7 +196,7 @@ const htmlPage = `
                 muted: false,
                 autoplay: false,
                 pip: true,
-                autoSize: false, // CSS ko control karne do
+                autoSize: false,
                 autoMini: true,
                 screenshot: true,
                 setting: true,
@@ -236,6 +292,20 @@ Bun.serve({
 
     if (req.method === "OPTIONS") {
       return new Response(null, { headers: corsHeaders });
+    }
+
+    // 📱 YAHAN MANIFEST.JSON BHEJA JA RAHA HAI
+    if (pathname === "/manifest.json") {
+      return new Response(JSON.stringify(manifestJson), {
+        headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+
+    // ⚙️ YAHAN SERVICE WORKER BHEJA JA RAHA HAI
+    if (pathname === "/sw.js") {
+      return new Response(serviceWorkerJs, {
+        headers: { "Content-Type": "application/javascript", ...corsHeaders }
+      });
     }
 
     if (pathname === "/") {
