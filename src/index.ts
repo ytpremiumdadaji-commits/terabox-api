@@ -13,7 +13,7 @@ const corsHeaders = {
 };
 
 // ==========================================
-// 🎨 ULTRA-PROFESSIONAL FRONTEND (HTML)
+// 🎨 OPTIMIZED FRONTEND (Fast Player & High-Res Thumbs)
 // ==========================================
 const htmlPage = `
 <!DOCTYPE html>
@@ -23,15 +23,25 @@ const htmlPage = `
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TeraBox Stream & Download</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
-        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        /* Player Customization */
-        :root { --plyr-color-main: #3b82f6; --plyr-video-background: #000; }
-        .plyr { border-radius: 0.75rem 0.75rem 0 0; overflow: hidden; }
+        .glass-card { background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        
+        /* Custom Native Player Styling for Zero Buffering */
+        video {
+            width: 100%;
+            height: auto;
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+            background-color: #000;
+            outline: none;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        /* Custom styling for WebKit video controls */
+        video::-webkit-media-controls-panel {
+            background-image: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+        }
     </style>
 </head>
 <body class="text-white min-h-screen flex flex-col items-center py-10 px-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black">
@@ -77,12 +87,13 @@ const htmlPage = `
 
         <div id="resultCard" class="hidden glass-card rounded-2xl shadow-2xl flex flex-col transform transition-all">
             
-            <div class="w-full bg-black rounded-t-2xl relative group">
-                <video id="player" playsinline controls data-poster="">
-                    </video>
+            <div class="w-full bg-black rounded-t-2xl relative">
+                <video id="player" playsinline controls preload="metadata" poster="">
+                    Your browser does not support the video tag.
+                </video>
             </div>
 
-            <div class="p-6">
+            <div class="p-6 relative">
                 <div class="mb-6">
                     <h3 id="filename" class="text-lg md:text-xl font-bold text-white line-clamp-2 leading-tight"></h3>
                     <div class="flex items-center gap-3 mt-2 text-sm text-slate-400 font-medium">
@@ -113,15 +124,10 @@ const htmlPage = `
     </div>
 
     <script>
-        // Initialize Professional Player
-        const player = new Plyr('#player', {
-            controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'],
-            seekTime: 10
-        });
+        const player = document.getElementById('player');
 
         function playVideo() {
             player.play();
-            // Scroll to player smoothly
             document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
@@ -129,7 +135,6 @@ const htmlPage = `
             const link = document.getElementById('link').value.trim();
             if(!link) return;
 
-            // UI Reset
             document.getElementById('loading').classList.remove('hidden');
             document.getElementById('resultCard').classList.add('hidden');
             document.getElementById('error').classList.add('hidden');
@@ -137,8 +142,8 @@ const htmlPage = `
             btn.disabled = true;
             btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>';
 
-            // Pause player if already playing
-            player.stop();
+            player.pause();
+            player.removeAttribute('src');
 
             try {
                 const res = await fetch('/api?url=' + encodeURIComponent(link));
@@ -150,27 +155,28 @@ const htmlPage = `
 
                 if(data.status === 'success') {
                     document.getElementById('resultCard').classList.remove('hidden');
-                    document.getElementById('filename').innerText = data.filename || 'Unknown File';
+                    
+                    const actualFilename = data.filename || 'TeraBox_Video.mp4';
+                    document.getElementById('filename').innerText = actualFilename;
                     document.getElementById('size').innerText = data.size || 'N/A';
                     
-                    // Naya Download aur Stream logic
-                    const downloadUrl = "/proxy?url=" + encodeURIComponent(data.download);
-                    const streamUrl = "/proxy?url=" + encodeURIComponent(data.stream) + "&action=play";
+                    // ==========================================
+                    // 🚀 NAYA LOGIC: Asli naam bhejna backend ko
+                    // ==========================================
+                    const downloadUrl = "/proxy?url=" + encodeURIComponent(data.download) + "&name=" + encodeURIComponent(actualFilename);
+                    const streamUrl = "/proxy?url=" + encodeURIComponent(data.stream) + "&action=play&name=" + encodeURIComponent(actualFilename);
                     
                     document.getElementById('downloadBtn').href = downloadUrl;
 
-                    // Update Plyr Player Source & Poster dynamically
-                    player.source = {
-                        type: 'video',
-                        title: data.filename,
-                        sources: [
-                            {
-                                src: streamUrl,
-                                type: 'video/mp4',
-                            },
-                        ],
-                        poster: (data.thumbs && data.thumbs.url3) ? data.thumbs.url3 : '',
-                    };
+                    // ==========================================
+                    // 🖼️ BEST QUALITY THUMBNAIL (url3 > url2 > url1)
+                    // ==========================================
+                    let bestThumb = '';
+                    if (data.thumbs) {
+                        bestThumb = data.thumbs.url3 || data.thumbs.url2 || data.thumbs.url1 || '';
+                    }
+                    player.poster = bestThumb;
+                    player.src = streamUrl;
 
                 } else {
                     document.getElementById('errorText').innerText = data.message || data.error || "Failed to fetch video.";
@@ -206,11 +212,16 @@ Bun.serve({
     }
 
     // ==========================================
-    // 🛡️ PROXY ROUTE (Fixes Download/Stream Issue)
+    // 🛡️ PROXY ROUTE (Fixes File Name & Buffering Headers)
     // ==========================================
     if (pathname === "/proxy") {
       const targetUrl = url.searchParams.get("url");
-      const action = url.searchParams.get("action"); 
+      const action = url.searchParams.get("action");
+      
+      // ✅ Yahan hum frontend se file ka naam receive kar rahe hain
+      const fileNameRaw = url.searchParams.get("name") || "TeraBox_Video.mp4";
+      // Double quotes hata dete hain taaki download header error na de
+      const safeFileName = fileNameRaw.replace(/"/g, ''); 
       
       if (!targetUrl) return new Response("Missing URL", { status: 400 });
 
@@ -223,6 +234,7 @@ Bun.serve({
         fetchHeaders.set("Cookie", `ndus=${ndusCookie}`);
       }
       
+      // Range header video ko parts mein (bina buffering) load karne me madad karta hai
       const range = req.headers.get("Range");
       if (range) {
         fetchHeaders.set("Range", range);
@@ -240,7 +252,8 @@ Bun.serve({
                 resHeaders.set("content-type", "video/mp4");
             }
         } else {
-            resHeaders.set("content-disposition", 'attachment'); 
+            // ✅ Yahan hum asli naam browser ko bhej rahe hain (Proxy.mp4 ki jagah)
+            resHeaders.set("content-disposition", \`attachment; filename="\${safeFileName}"\`); 
         }
 
         return new Response(proxyRes.body, {
