@@ -1,5 +1,5 @@
 import { tera } from "./lib/terabox";
-import { isValidShareUrl, extractSurl, formatBytes } from "./lib/utils";
+import { isValidShareUrl, extractSurl, formatBytes, loadCookies } from "./lib/utils";
 
 const port = process.env.PORT || 5000;
 
@@ -9,11 +9,11 @@ const CACHE_DURATION = 2 * 60 * 60 * 1000;
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Range",
 };
 
 // ==========================================
-// 🎨 YE HAI AAPKI WEBSITE KA FRONTEND (HTML)
+// 🎨 WEBSITE FRONTEND (HTML)
 // ==========================================
 const htmlPage = `
 <!DOCTYPE html>
@@ -68,7 +68,7 @@ const htmlPage = `
                     <span>📺</span> Play Online
                 </a>
             </div>
-            <p class="text-[10px] text-gray-500 mt-4">* Links expire in 8 hours. Generated via API.</p>
+            <p class="text-[10px] text-gray-500 mt-4">* Video will be proxied securely through server.</p>
         </div>
 
     </div>
@@ -85,7 +85,6 @@ const htmlPage = `
             document.getElementById('btn').classList.add('opacity-50');
 
             try {
-                // Yahan API call ho rahi hai (usi server par)
                 const res = await fetch('/api?url=' + encodeURIComponent(link));
                 const data = await res.json();
 
@@ -97,8 +96,11 @@ const htmlPage = `
                     document.getElementById('result').classList.remove('hidden');
                     document.getElementById('filename').innerText = data.filename || 'Unknown File';
                     document.getElementById('size').innerText = 'Size: ' + (data.size || 'N/A');
-                    document.getElementById('downloadBtn').href = data.download;
-                    document.getElementById('streamBtn').href = data.stream;
+                    
+                    // YAHAN MAGIC HAI: Direct link ki jagah hum Proxy link use kar rahe hain
+                    const proxyUrl = "/proxy?url=" + encodeURIComponent(data.download);
+                    document.getElementById('downloadBtn').href = proxyUrl;
+                    document.getElementById('streamBtn').href = proxyUrl;
 
                     if(data.thumbs && data.thumbs.url1) {
                         const img = document.getElementById('thumb');
@@ -132,44 +134,64 @@ Bun.serve({
       return new Response(null, { headers: corsHeaders });
     }
 
-    // YAHAN BADLAAV KIYA HAI: Ab homepage (/) par JSON nahi, Website dikhegi!
     if (pathname === "/") {
       return new Response(htmlPage, { 
-        headers: { 
-            "Content-Type": "text/html",
-            ...corsHeaders
-        } 
+        headers: { "Content-Type": "text/html", ...corsHeaders } 
       });
     }
 
-    // Ye purana API code hai, ye waisa hi rahega backend ke liye
+    // ==========================================
+    // 🛡️ NAYA PROXY ROUTE (Bypasses Error 31326)
+    // ==========================================
+    if (pathname === "/proxy") {
+      const targetUrl = url.searchParams.get("url");
+      if (!targetUrl) return new Response("Missing URL", { status: 400 });
+
+      const cookies = loadCookies();
+      const ndusCookie = cookies["ndus"];
+
+      const fetchHeaders = new Headers();
+      fetchHeaders.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/145.0.0.0 Safari/537.36");
+      if (ndusCookie) {
+        fetchHeaders.set("Cookie", `ndus=${ndusCookie}`);
+      }
+      
+      // Video aage-peeche (seek) karne ke liye Range header pass karna zaroori hai
+      const range = req.headers.get("Range");
+      if (range) {
+        fetchHeaders.set("Range", range);
+      }
+
+      try {
+        const proxyRes = await fetch(targetUrl, { headers: fetchHeaders, method: req.method });
+        const resHeaders = new Headers(proxyRes.headers);
+        resHeaders.set("Access-Control-Allow-Origin", "*");
+        
+        return new Response(proxyRes.body, {
+          status: proxyRes.status,
+          headers: resHeaders
+        });
+      } catch (e) {
+        return new Response("Proxy failed", { status: 500 });
+      }
+    }
+
+    // Main API Route
     if (pathname === "/api") {
       try {
-        const startTime = Date.now();
         const targetUrlRaw = url.searchParams.get("url");
-
         if (!targetUrlRaw || !targetUrlRaw.trim()) {
-          return Response.json(
-            { status: "error", message: "Missing required parameter: url" },
-            { status: 400, headers: corsHeaders },
-          );
+          return Response.json({ status: "error", message: "Missing required parameter: url" }, { status: 400, headers: corsHeaders });
         }
 
         const targetUrl = targetUrlRaw.trim();
-
         if (!targetUrl.startsWith("http") || !isValidShareUrl(targetUrl)) {
-          return Response.json(
-            { status: "error", message: "Invalid TeraBox share URL" },
-            { status: 400, headers: corsHeaders },
-          );
+          return Response.json({ status: "error", message: "Invalid TeraBox share URL" }, { status: 400, headers: corsHeaders });
         }
 
         const surl = extractSurl(targetUrl);
         if (!surl) {
-          return Response.json(
-            { status: "error", message: "Could not extract surl from URL" },
-            { status: 400, headers: corsHeaders },
-          );
+          return Response.json({ status: "error", message: "Could not extract surl" }, { status: 400, headers: corsHeaders });
         }
 
         let data;
@@ -180,43 +202,31 @@ Bun.serve({
           data = await tera(surl);
           cache.set(surl, { data, expiry: Date.now() + CACHE_DURATION });
         }
-        const responseTime = ((Date.now() - startTime) / 1000).toFixed(3) + "s";
 
         if (data && data.error) {
-          return Response.json(
-            { status: "error", error: data.error, response_time: responseTime },
-            { status: 400, headers: corsHeaders },
-          );
+          return Response.json({ status: "error", error: data.error }, { status: 400, headers: corsHeaders });
         }
 
-        let filename, size, download, stream, thumbs;
-
+        let filename, size, download, thumbs;
         if (data && data.list && data.list.length > 0) {
           const firstItem = data.list[0];
           filename = firstItem.server_filename;
           size = formatBytes(firstItem.size);
           download = firstItem.dlink;
-          stream = firstItem.dlink;
           thumbs = firstItem.thumbs;
         }
 
-        return Response.json(
-          {
-            status: "success",
-            response_time: responseTime,
-            ...(filename && { filename }),
-            ...(size && { size }),
-            ...(download && { download }),
-            ...(stream && { stream }),
-            ...(thumbs && { thumbs }),
-          },
-          { headers: corsHeaders },
-        );
+        return Response.json({
+          status: "success",
+          ...(filename && { filename }),
+          ...(size && { size }),
+          ...(download && { download }),
+          ...(download && { stream: download }),
+          ...(thumbs && { thumbs }),
+        }, { headers: corsHeaders });
+
       } catch (error: any) {
-        return Response.json(
-          { status: "error", message: String(error) },
-          { status: 500, headers: corsHeaders },
-        );
+        return Response.json({ status: "error", message: String(error) }, { status: 500, headers: corsHeaders });
       }
     }
 
