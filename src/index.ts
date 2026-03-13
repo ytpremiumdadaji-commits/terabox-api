@@ -184,7 +184,6 @@ const htmlPage = `
                     document.getElementById('filename').innerText = actualFilename;
                     document.getElementById('size').innerText = data.size || 'N/A';
                     
-                    // Naya: Proxy ke through perfect Range headers pass honge
                     const downloadUrl = "/proxy?url=" + encodeURIComponent(data.download) + "&name=" + encodeURIComponent(actualFilename);
                     const streamUrl = "/proxy?url=" + encodeURIComponent(data.stream) + "&action=play&name=" + encodeURIComponent(actualFilename);
                     
@@ -195,7 +194,6 @@ const htmlPage = `
                         bestThumb = data.thumbs.url3 || data.thumbs.url2 || data.thumbs.url1 || '';
                     }
                     
-                    // Initialize Fast Player
                     initPlayer(streamUrl, bestThumb);
 
                 } else {
@@ -231,9 +229,6 @@ Bun.serve({
       });
     }
 
-    // ==========================================
-    // 🛡️ ADVANCED PROXY (Copies True Headers for Fast Stream)
-    // ==========================================
     if (pathname === "/proxy") {
       const targetUrl = url.searchParams.get("url");
       const action = url.searchParams.get("action");
@@ -247,18 +242,18 @@ Bun.serve({
 
       const fetchHeaders = new Headers();
       fetchHeaders.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/145.0.0.0 Safari/537.36");
+      
+      // ✅ YE THA MAIN FIX: Safe String Concatenation (No escaped backticks)
       if (ndusCookie) {
-        fetchHeaders.set("Cookie", \`ndus=\${ndusCookie}\`);
+        fetchHeaders.set("Cookie", "ndus=" + ndusCookie);
       }
       
-      // ✅ Buffering theek karne ki sabse main line:
       const range = req.headers.get("Range");
       if (range) {
         fetchHeaders.set("Range", range);
       }
 
       try {
-        // 'follow' karne se ye Asli CDN server par pahuch jata hai
         const proxyRes = await fetch(targetUrl, { 
             headers: fetchHeaders, 
             method: req.method,
@@ -266,7 +261,6 @@ Bun.serve({
         });
         
         const resHeaders = new Headers();
-        // Copy ONLY necessary headers to avoid conflicts
         const allowedHeaders = ['content-length', 'content-range', 'accept-ranges', 'content-type'];
         proxyRes.headers.forEach((value, key) => {
             if (allowedHeaders.includes(key.toLowerCase())) {
@@ -293,7 +287,6 @@ Bun.serve({
       }
     }
 
-    // Main API Route
     if (pathname === "/api") {
       try {
         const targetUrlRaw = url.searchParams.get("url");
