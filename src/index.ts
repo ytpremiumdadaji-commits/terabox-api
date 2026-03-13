@@ -13,7 +13,7 @@ const corsHeaders = {
 };
 
 // ==========================================
-// 🎨 OPTIMIZED FRONTEND (Fast Player & High-Res Thumbs)
+// 🎨 FRONTEND WITH RESET BUTTON & FAST PLAYER
 // ==========================================
 const htmlPage = `
 <!DOCTYPE html>
@@ -28,7 +28,6 @@ const htmlPage = `
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
         .glass-card { background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
         
-        /* Custom Native Player Styling for Zero Buffering */
         video {
             width: 100%;
             height: auto;
@@ -37,10 +36,6 @@ const htmlPage = `
             background-color: #000;
             outline: none;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-        }
-        /* Custom styling for WebKit video controls */
-        video::-webkit-media-controls-panel {
-            background-image: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
         }
     </style>
 </head>
@@ -55,7 +50,7 @@ const htmlPage = `
             <p class="text-slate-400 text-sm md:text-base font-medium">Fast Stream & Direct Download. No Ads, No Waiting.</p>
         </div>
 
-        <div class="glass-card rounded-2xl shadow-2xl p-2 flex flex-col sm:flex-row gap-2 mb-8 relative">
+        <div id="searchSection" class="glass-card rounded-2xl shadow-2xl p-2 flex flex-col sm:flex-row gap-2 mb-8 relative transition-all">
             <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl blur opacity-20"></div>
             <div class="relative flex w-full flex-col sm:flex-row gap-2 z-10">
                 <div class="flex-1 relative">
@@ -88,7 +83,7 @@ const htmlPage = `
         <div id="resultCard" class="hidden glass-card rounded-2xl shadow-2xl flex flex-col transform transition-all">
             
             <div class="w-full bg-black rounded-t-2xl relative">
-                <video id="player" playsinline controls preload="metadata" poster="">
+                <video id="player" playsinline controls preload="auto" poster="">
                     Your browser does not support the video tag.
                 </video>
             </div>
@@ -118,6 +113,11 @@ const htmlPage = `
                         Fast Download
                     </a>
                 </div>
+
+                <button onclick="resetUI()" class="w-full mt-4 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 border border-slate-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Paste Another Link
+                </button>
             </div>
         </div>
 
@@ -129,6 +129,17 @@ const htmlPage = `
         function playVideo() {
             player.play();
             document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // RESET FUNCTION (Wapas naya link daalne ke liye)
+        function resetUI() {
+            player.pause();
+            player.removeAttribute('src');
+            player.load();
+            
+            document.getElementById('link').value = '';
+            document.getElementById('resultCard').classList.add('hidden');
+            document.getElementById('searchSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         async function getLinks() {
@@ -205,6 +216,9 @@ Bun.serve({
       });
     }
 
+    // ==========================================
+    // 🛡️ OPTIMIZED PROXY ROUTE (Speed & Chunking Fix)
+    // ==========================================
     if (pathname === "/proxy") {
       const targetUrl = url.searchParams.get("url");
       const action = url.searchParams.get("action");
@@ -223,6 +237,7 @@ Bun.serve({
         fetchHeaders.set("Cookie", `ndus=${ndusCookie}`);
       }
       
+      // Range Header ko theek se forward karna taaki chunks mein fast load ho
       const range = req.headers.get("Range");
       if (range) {
         fetchHeaders.set("Range", range);
@@ -230,7 +245,13 @@ Bun.serve({
 
       try {
         const proxyRes = await fetch(targetUrl, { headers: fetchHeaders, method: req.method });
-        const resHeaders = new Headers(proxyRes.headers);
+        
+        // Response headers ko exactly copy karna speed ke liye zaroori hai
+        const resHeaders = new Headers();
+        for (const [key, value] of proxyRes.headers.entries()) {
+            resHeaders.set(key, value);
+        }
+        
         resHeaders.set("Access-Control-Allow-Origin", "*");
         
         if (action === "play") {
@@ -240,7 +261,6 @@ Bun.serve({
                 resHeaders.set("content-type", "video/mp4");
             }
         } else {
-            // ✅ Fix: Normal string concatenation kiya hai bina escaped backticks ke
             resHeaders.set("content-disposition", 'attachment; filename="' + safeFileName + '"'); 
         }
 
@@ -253,6 +273,7 @@ Bun.serve({
       }
     }
 
+    // Main API Route
     if (pathname === "/api") {
       try {
         const targetUrlRaw = url.searchParams.get("url");
