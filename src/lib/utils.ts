@@ -6,6 +6,8 @@ export const ALLOWED_HOSTS = new Set([
   "terabox.app",
   "www.terabox.app",
   "teraboxshare.com",
+  "www.terasharelink.com",
+  "terasharelink.com"
   "www.teraboxshare.com",
   "terabox.com",
   "www.terabox.com",
