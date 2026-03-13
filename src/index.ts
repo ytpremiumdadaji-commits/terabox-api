@@ -12,125 +12,175 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Range",
 };
 
+// ==========================================
+// 🎨 ULTRA-PROFESSIONAL FRONTEND (HTML)
+// ==========================================
 const htmlPage = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TeraBox Video Downloader</title>
+    <title>TeraBox Stream & Download</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .glass-panel { background: rgba(31, 41, 55, 0.7); backdrop-filter: blur(10px); }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        /* Player Customization */
+        :root { --plyr-color-main: #3b82f6; --plyr-video-background: #000; }
+        .plyr { border-radius: 0.75rem 0.75rem 0 0; overflow: hidden; }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-    <div class="max-w-md w-full glass-panel border border-gray-700 rounded-2xl shadow-2xl p-6 sm:p-8">
+<body class="text-white min-h-screen flex flex-col items-center py-10 px-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black">
+    
+    <div class="max-w-2xl w-full relative z-10">
         
-        <div class="text-center mb-6">
-            <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2">TeraBox DL</h1>
-            <p class="text-gray-400 text-sm">Download or Stream TeraBox Videos easily!</p>
+        <div class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">TeraBox</span> Player
+            </h1>
+            <p class="text-slate-400 text-sm md:text-base font-medium">Fast Stream & Direct Download. No Ads, No Waiting.</p>
         </div>
 
-        <div class="space-y-4">
-            <input type="url" id="link" placeholder="Paste your Terabox Link here..." 
-                class="w-full p-4 rounded-xl bg-gray-800 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-500">
-            
-            <button onclick="getLinks()" id="btn" 
-                class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 font-bold py-4 rounded-xl transition-all shadow-lg transform hover:scale-[1.02] active:scale-95">
-                🚀 Get Links
-            </button>
-        </div>
-
-        <div id="loading" class="hidden text-center mt-6">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-            <p class="text-gray-400 text-sm animate-pulse">Bypassing TeraBox Security... ⏳</p>
-        </div>
-
-        <div id="error" class="hidden text-center mt-6 bg-red-900/50 border border-red-500 text-red-200 p-3 rounded-lg text-sm"></div>
-
-        <div id="result" class="hidden mt-8 bg-gray-800 border border-gray-700 p-5 rounded-xl text-center shadow-inner">
-            <img id="thumb" src="" alt="Thumbnail" class="w-full h-40 object-cover rounded-lg mb-4 hidden shadow-md">
-            <p id="filename" class="font-semibold text-sm mb-1 text-gray-200 break-all line-clamp-2"></p>
-            <p id="size" class="text-xs text-blue-400 font-mono mb-5"></p>
-            
-            <div class="flex flex-col gap-3 sm:flex-row">
-                <a id="downloadBtn" href="#" target="_blank" 
-                    class="flex-1 bg-green-600 hover:bg-green-700 py-3 rounded-lg font-bold text-sm shadow-lg flex justify-center items-center gap-2 transition-colors">
-                    <span>⬇️</span> Download
-                </a>
-                <a id="streamBtn" href="#" target="_blank" 
-                    class="flex-1 bg-purple-600 hover:bg-purple-700 py-3 rounded-lg font-bold text-sm shadow-lg flex justify-center items-center gap-2 transition-colors">
-                    <span>📺</span> Play Online
-                </a>
+        <div class="glass-card rounded-2xl shadow-2xl p-2 flex flex-col sm:flex-row gap-2 mb-8 relative">
+            <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl blur opacity-20"></div>
+            <div class="relative flex w-full flex-col sm:flex-row gap-2 z-10">
+                <div class="flex-1 relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                    </div>
+                    <input type="url" id="link" placeholder="Paste your TeraBox link here..." 
+                        class="w-full pl-11 pr-4 py-4 rounded-xl bg-slate-800/80 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+                </div>
+                <button onclick="getLinks()" id="searchBtn" 
+                    class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-4 px-8 rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-lg shadow-blue-500/30 active:scale-95">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <span>Search</span>
+                </button>
             </div>
+        </div>
+
+        <div id="loading" class="hidden flex flex-col items-center justify-center py-10">
+            <div class="w-10 h-10 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+            <p class="text-slate-400 font-medium animate-pulse">Extracting premium links...</p>
+        </div>
+
+        <div id="error" class="hidden mb-6 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-xl flex items-center gap-3">
+            <svg class="w-6 h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <p id="errorText" class="text-sm font-medium"></p>
+        </div>
+
+        <div id="resultCard" class="hidden glass-card rounded-2xl shadow-2xl flex flex-col transform transition-all">
             
-            <div id="player-container" class="hidden mt-4">
-                <video id="videoPlayer" controls class="w-full rounded-lg shadow-lg">
-                    Your browser does not support the video tag.
-                </video>
+            <div class="w-full bg-black rounded-t-2xl relative group">
+                <video id="player" playsinline controls data-poster="">
+                    </video>
             </div>
 
-            <p class="text-[10px] text-gray-500 mt-4">* Video will be proxied securely through server.</p>
+            <div class="p-6">
+                <div class="mb-6">
+                    <h3 id="filename" class="text-lg md:text-xl font-bold text-white line-clamp-2 leading-tight"></h3>
+                    <div class="flex items-center gap-3 mt-2 text-sm text-slate-400 font-medium">
+                        <span id="size" class="bg-slate-800 px-2 py-1 rounded-md text-blue-400"></span>
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Secure Proxy
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button id="watchBtn" onclick="playVideo()" 
+                        class="flex-1 bg-white hover:bg-slate-200 text-slate-900 font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                        Watch Now
+                    </button>
+                    
+                    <a id="downloadBtn" href="#" 
+                        class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Fast Download
+                    </a>
+                </div>
+            </div>
         </div>
 
     </div>
 
     <script>
+        // Initialize Professional Player
+        const player = new Plyr('#player', {
+            controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'],
+            seekTime: 10
+        });
+
+        function playVideo() {
+            player.play();
+            // Scroll to player smoothly
+            document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
         async function getLinks() {
             const link = document.getElementById('link').value.trim();
-            if(!link) return alert("Please paste a Terabox link first!");
+            if(!link) return;
 
+            // UI Reset
             document.getElementById('loading').classList.remove('hidden');
-            document.getElementById('result').classList.add('hidden');
+            document.getElementById('resultCard').classList.add('hidden');
             document.getElementById('error').classList.add('hidden');
-            document.getElementById('player-container').classList.add('hidden');
-            const videoElement = document.getElementById('videoPlayer');
-            videoElement.pause();
-            videoElement.removeAttribute('src');
-            
-            document.getElementById('btn').disabled = true;
-            document.getElementById('btn').classList.add('opacity-50');
+            const btn = document.getElementById('searchBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>';
+
+            // Pause player if already playing
+            player.stop();
 
             try {
                 const res = await fetch('/api?url=' + encodeURIComponent(link));
                 const data = await res.json();
 
                 document.getElementById('loading').classList.add('hidden');
-                document.getElementById('btn').disabled = false;
-                document.getElementById('btn').classList.remove('opacity-50');
+                btn.disabled = false;
+                btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg><span>Search</span>';
 
                 if(data.status === 'success') {
-                    document.getElementById('result').classList.remove('hidden');
+                    document.getElementById('resultCard').classList.remove('hidden');
                     document.getElementById('filename').innerText = data.filename || 'Unknown File';
-                    document.getElementById('size').innerText = 'Size: ' + (data.size || 'N/A');
+                    document.getElementById('size').innerText = data.size || 'N/A';
                     
-                    // Download link waisa hi rahega (Original link ya fir Proxy without play override)
-                    document.getElementById('downloadBtn').href = data.download;
-                    
-                    // Stream ke liye proxy URL banayenge jisme action=play laga hoga
+                    // Naya Download aur Stream logic
+                    const downloadUrl = "/proxy?url=" + encodeURIComponent(data.download);
                     const streamUrl = "/proxy?url=" + encodeURIComponent(data.stream) + "&action=play";
-                    document.getElementById('streamBtn').href = streamUrl;
+                    
+                    document.getElementById('downloadBtn').href = downloadUrl;
 
-                    // Web Player mein video set karke dikhana
-                    videoElement.src = streamUrl;
-                    document.getElementById('player-container').classList.remove('hidden');
+                    // Update Plyr Player Source & Poster dynamically
+                    player.source = {
+                        type: 'video',
+                        title: data.filename,
+                        sources: [
+                            {
+                                src: streamUrl,
+                                type: 'video/mp4',
+                            },
+                        ],
+                        poster: (data.thumbs && data.thumbs.url3) ? data.thumbs.url3 : '',
+                    };
 
-                    if(data.thumbs && data.thumbs.url1) {
-                        const img = document.getElementById('thumb');
-                        img.src = data.thumbs.url1;
-                        img.classList.remove('hidden');
-                    }
                 } else {
-                    document.getElementById('error').innerText = "Error: " + (data.message || data.error || "Failed to fetch");
+                    document.getElementById('errorText').innerText = data.message || data.error || "Failed to fetch video.";
                     document.getElementById('error').classList.remove('hidden');
                 }
             } catch(e) {
                 document.getElementById('loading').classList.add('hidden');
-                document.getElementById('btn').disabled = false;
-                document.getElementById('btn').classList.remove('opacity-50');
-                document.getElementById('error').innerText = "Network Error! Please try again.";
+                btn.disabled = false;
+                btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg><span>Search</span>';
+                document.getElementById('errorText').innerText = "Network Error! Please try again.";
                 document.getElementById('error').classList.remove('hidden');
             }
         }
@@ -160,7 +210,7 @@ Bun.serve({
     // ==========================================
     if (pathname === "/proxy") {
       const targetUrl = url.searchParams.get("url");
-      const action = url.searchParams.get("action"); // 'play' action stream ke liye check karenge
+      const action = url.searchParams.get("action"); 
       
       if (!targetUrl) return new Response("Missing URL", { status: 400 });
 
@@ -183,15 +233,14 @@ Bun.serve({
         const resHeaders = new Headers(proxyRes.headers);
         resHeaders.set("Access-Control-Allow-Origin", "*");
         
-        // ✨ THE MAGIC TRICK: Agar action 'play' hai, toh force download ko hata do aur video format daal do
         if (action === "play") {
-            resHeaders.delete("content-disposition"); // "download karlo" wali command delete!
-            
-            // Browser ko batana ki ye file mp4 video hai
+            resHeaders.delete("content-disposition"); 
             const currentType = resHeaders.get("content-type") || "";
             if (!currentType.includes("video")) {
                 resHeaders.set("content-type", "video/mp4");
             }
+        } else {
+            resHeaders.set("content-disposition", 'attachment'); 
         }
 
         return new Response(proxyRes.body, {
