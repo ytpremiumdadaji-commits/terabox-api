@@ -160,17 +160,11 @@ const htmlPage = `
                     document.getElementById('filename').innerText = actualFilename;
                     document.getElementById('size').innerText = data.size || 'N/A';
                     
-                    // ==========================================
-                    // 🚀 NAYA LOGIC: Asli naam bhejna backend ko
-                    // ==========================================
                     const downloadUrl = "/proxy?url=" + encodeURIComponent(data.download) + "&name=" + encodeURIComponent(actualFilename);
                     const streamUrl = "/proxy?url=" + encodeURIComponent(data.stream) + "&action=play&name=" + encodeURIComponent(actualFilename);
                     
                     document.getElementById('downloadBtn').href = downloadUrl;
 
-                    // ==========================================
-                    // 🖼️ BEST QUALITY THUMBNAIL (url3 > url2 > url1)
-                    // ==========================================
                     let bestThumb = '';
                     if (data.thumbs) {
                         bestThumb = data.thumbs.url3 || data.thumbs.url2 || data.thumbs.url1 || '';
@@ -211,16 +205,11 @@ Bun.serve({
       });
     }
 
-    // ==========================================
-    // 🛡️ PROXY ROUTE (Fixes File Name & Buffering Headers)
-    // ==========================================
     if (pathname === "/proxy") {
       const targetUrl = url.searchParams.get("url");
       const action = url.searchParams.get("action");
       
-      // ✅ Yahan hum frontend se file ka naam receive kar rahe hain
       const fileNameRaw = url.searchParams.get("name") || "TeraBox_Video.mp4";
-      // Double quotes hata dete hain taaki download header error na de
       const safeFileName = fileNameRaw.replace(/"/g, ''); 
       
       if (!targetUrl) return new Response("Missing URL", { status: 400 });
@@ -234,7 +223,6 @@ Bun.serve({
         fetchHeaders.set("Cookie", `ndus=${ndusCookie}`);
       }
       
-      // Range header video ko parts mein (bina buffering) load karne me madad karta hai
       const range = req.headers.get("Range");
       if (range) {
         fetchHeaders.set("Range", range);
@@ -252,8 +240,8 @@ Bun.serve({
                 resHeaders.set("content-type", "video/mp4");
             }
         } else {
-            // ✅ Yahan hum asli naam browser ko bhej rahe hain (Proxy.mp4 ki jagah)
-            resHeaders.set("content-disposition", \`attachment; filename="\${safeFileName}"\`); 
+            // ✅ Fix: Normal string concatenation kiya hai bina escaped backticks ke
+            resHeaders.set("content-disposition", 'attachment; filename="' + safeFileName + '"'); 
         }
 
         return new Response(proxyRes.body, {
@@ -265,7 +253,6 @@ Bun.serve({
       }
     }
 
-    // Main API Route
     if (pathname === "/api") {
       try {
         const targetUrlRaw = url.searchParams.get("url");
