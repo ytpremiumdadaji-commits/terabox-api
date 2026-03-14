@@ -12,7 +12,6 @@ function getValidCookies() {
     return rawNdus.split(',').map(c => c.trim()).filter(c => c.length > 20);
 }
 
-// Ye system cookies ki health track karega
 const cookieStats = new Map<string, { uses: number; errors: number; lastActive: string }>();
 
 function recordUse(cookie: string, isError: boolean) {
@@ -25,7 +24,6 @@ function recordUse(cookie: string, isError: boolean) {
         stats.errors += 1;
     } else {
         stats.uses += 1;
-        // Indian Time ke hisaab se update karega
         stats.lastActive = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
     }
 }
@@ -199,16 +197,17 @@ Bun.serve({
     const pathname = url.pathname;
 
     if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-    if (pathname === "/manifest.json") return new Response(JSON.stringify(manifestJson), { headers: { "Content-Type": "application/json", ...corsHeaders } });
-    if (pathname === "/sw.js") return new Response(serviceWorkerJs, { headers: { "Content-Type": "application/javascript", ...corsHeaders } });
-    if (pathname === "/") return new Response(htmlPage, { headers: { "Content-Type": "text/html", ...corsHeaders } });
+    if (pathname === "/manifest.json") return new Response(JSON.stringify(manifestJson), { headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders } });
+    if (pathname === "/sw.js") return new Response(serviceWorkerJs, { headers: { "Content-Type": "application/javascript; charset=utf-8", ...corsHeaders } });
+    
+    // YAHAN FIX KIYA HAI: charset=utf-8 jisse hindi aur emojis theek dikhein
+    if (pathname === "/") return new Response(htmlPage, { headers: { "Content-Type": "text/html; charset=utf-8", ...corsHeaders } });
 
     // ==========================================
     // 🛡️ SECRET ADMIN PANEL ROUTE
     // ==========================================
     if (pathname === "/admin") {
         const pass = url.searchParams.get("pass");
-        // Aapka secret password "rishi2026" hai
         if (pass !== "rishi2026") {
             return new Response("Unauthorized! Password galat hai.", { status: 401 });
         }
@@ -221,7 +220,6 @@ Bun.serve({
             const stats = cookieStats.get(cookie) || { uses: 0, errors: 0, lastActive: "Never" };
             
             let statusBadge = "<span style='color: #4ade80; font-weight: bold;'>✅ Active</span>";
-            // Agar ek cookie ne lagatar 5 se zyada error diye hain, toh usko block maan liya jayega
             if (stats.errors > 5) {
                 statusBadge = "<span style='color: #f87171; font-weight: bold;'>⚠️ Blocked/Expired</span>";
             }
@@ -236,10 +234,12 @@ Bun.serve({
             tableRows += "</tr>";
         });
 
+        // Yahan bhi meta charset UTF-8 add kiya hai HTML ke andar
         const adminHtml = `
         <!DOCTYPE html>
-        <html>
+        <html lang="en">
         <head>
+            <meta charset="UTF-8">
             <title>Admin Dashboard - TeraBox Pro</title>
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
@@ -273,7 +273,8 @@ Bun.serve({
         </html>
         `;
 
-        return new Response(adminHtml, { headers: { "Content-Type": "text/html" } });
+        // YAHAN FIX KIYA HAI: Headers mein charset=utf-8 daal diya
+        return new Response(adminHtml, { headers: { "Content-Type": "text/html; charset=utf-8" } });
     }
 
     // ==========================================
@@ -302,11 +303,11 @@ Bun.serve({
         const pRes = await fetch(targetUrl, { headers: fHeaders, method: req.method, redirect: "follow" });
         
         if (!pRes.ok) {
-           recordUse(ndusCookie, true); // Tracker: Error
+           recordUse(ndusCookie, true); 
            return new Response("Proxy failed with status: " + pRes.status, { status: pRes.status });
         }
 
-        recordUse(ndusCookie, false); // Tracker: Success
+        recordUse(ndusCookie, false); 
 
         const rHeaders = new Headers();
         const allowedHeaders = ['content-length', 'content-range', 'accept-ranges', 'content-type'];
@@ -327,7 +328,7 @@ Bun.serve({
 
         return new Response(pRes.body, { status: pRes.status, headers: rHeaders });
       } catch (e: any) {
-        recordUse(ndusCookie, true); // Tracker: Network Error
+        recordUse(ndusCookie, true); 
         return new Response("Proxy failed due to network error: " + String(e.message), { status: 500 });
       }
     }
@@ -351,13 +352,13 @@ Bun.serve({
         const cached = cache.get(surl);
         if (cached && Date.now() < cached.expiry) {
           data = cached.data;
-          recordUse(selCookie, false); // Tracker: Success from Cache
+          recordUse(selCookie, false); 
         } else {
           data = await tera(surl, selCookie);
           if (data?.error) {
-              recordUse(selCookie, true); // Tracker: Error from API
+              recordUse(selCookie, true); 
           } else {
-              recordUse(selCookie, false); // Tracker: Success from API
+              recordUse(selCookie, false); 
               cache.set(surl, { data, expiry: Date.now() + CACHE_DURATION });
           }
         }
