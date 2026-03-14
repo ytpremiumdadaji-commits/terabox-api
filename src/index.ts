@@ -4,12 +4,11 @@ import { isValidShareUrl, extractSurl, formatBytes, loadCookies } from "./lib/ut
 const port = process.env.PORT || 5000;
 
 // ==========================================
-// 🔒 SECURE MULTI-COOKIE POOL (From Render Env)
+// 🔒 SECURE MULTI-COOKIE POOL
 // ==========================================
 function getValidCookies() {
     const cookiesObj = loadCookies();
     const rawNdus = cookiesObj["ndus"] || "";
-    // Agar user ne comma lagakar multiple cookies di hain, toh usko alag-alag kar dega
     return rawNdus.split(',').map(c => c.trim()).filter(c => c.length > 20);
 }
 
@@ -40,10 +39,7 @@ const manifestJson = {
   ]
 };
 
-const serviceWorkerJs = `
-self.addEventListener('install', (e) => { self.skipWaiting(); });
-self.addEventListener('fetch', (e) => { });
-`;
+const serviceWorkerJs = "self.addEventListener('install', (e) => { self.skipWaiting(); }); self.addEventListener('fetch', (e) => { });";
 
 // ==========================================
 // 🎨 FRONTEND HTML
@@ -70,7 +66,6 @@ const htmlPage = `
     </style>
 </head>
 <body class="text-white min-h-screen flex flex-col items-center py-6 px-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black">
-    
     <div class="max-w-2xl w-full relative z-10">
         
         <button id="installAppBtn" class="hidden w-full mb-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 transition-all active:scale-95 animate-bounce">
@@ -90,15 +85,11 @@ const htmlPage = `
             <div class="relative flex w-full flex-col sm:flex-row gap-2 z-10">
                 <div class="flex-1 relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                        </svg>
+                        <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                     </div>
-                    <input type="url" id="link" placeholder="Paste TeraBox link here..." 
-                        class="w-full pl-11 pr-4 py-4 rounded-xl bg-slate-800/80 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+                    <input type="url" id="link" placeholder="Paste TeraBox link here..." class="w-full pl-11 pr-4 py-4 rounded-xl bg-slate-800/80 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
                 </div>
-                <button onclick="getLinks()" id="searchBtn" 
-                    class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-4 px-8 rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-lg shadow-blue-500/30 active:scale-95">
+                <button onclick="getLinks()" id="searchBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-4 px-8 rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-lg shadow-blue-500/30 active:scale-95">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     <span>Search</span>
                 </button>
@@ -115,170 +106,84 @@ const htmlPage = `
         </div>
 
         <div id="resultCard" class="hidden glass-card rounded-2xl shadow-2xl flex flex-col transform transition-all">
-            
             <div id="artplayer-container" class="artplayer-app bg-black"></div>
-
             <div class="p-5 sm:p-6 relative">
                 <div class="mb-5">
                     <h3 id="filename" class="text-lg md:text-xl font-bold text-white line-clamp-2 leading-tight"></h3>
                     <div class="flex items-center gap-3 mt-2 text-sm text-slate-400 font-medium">
                         <span id="size" class="bg-slate-800 px-2 py-1 rounded-md text-blue-400"></span>
-                        <span class="flex items-center gap-1">
-                            <svg class="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            Direct CDN Fast
-                        </span>
+                        <span class="flex items-center gap-1"><svg class="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>Direct CDN Fast</span>
                     </div>
                 </div>
-
                 <div class="flex flex-col sm:flex-row gap-3">
-                    <button onclick="playVideo()" 
-                        class="flex-1 bg-white hover:bg-slate-200 text-slate-900 font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95">
+                    <button onclick="playVideo()" class="flex-1 bg-white hover:bg-slate-200 text-slate-900 font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
                         Watch Now
                     </button>
-                    
-                    <a id="downloadBtn" href="#" 
-                        class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95">
+                    <a id="downloadBtn" href="#" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         Fast Download
                     </a>
                 </div>
-
                 <button onclick="resetUI()" class="w-full mt-4 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 border border-slate-600">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                     Paste Another Link
                 </button>
             </div>
         </div>
-
     </div>
-
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').then(() => {
-                console.log('Service Worker Registered');
-            });
-        }
-
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }
         let deferredPrompt;
         const installBtn = document.getElementById('installAppBtn');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            installBtn.classList.remove('hidden'); 
-        });
-
-        installBtn.addEventListener('click', async () => {
-            if (deferredPrompt !== null) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    deferredPrompt = null;
-                    installBtn.classList.add('hidden');
-                }
-            }
-        });
-
-        window.addEventListener('appinstalled', () => {
-            installBtn.classList.add('hidden'); 
-        });
-
+        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; installBtn.classList.remove('hidden'); });
+        installBtn.addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; installBtn.classList.add('hidden'); } });
+        
         let art = null;
-
         function initPlayer(url, poster) {
             if (art) { art.destroy(); }
-            art = new Artplayer({
-                container: '#artplayer-container',
-                url: url,
-                poster: poster,
-                volume: 0.8,
-                isLive: false,
-                muted: false,
-                autoplay: false,
-                pip: true,
-                autoSize: false,
-                autoMini: true,
-                screenshot: true,
-                setting: true,
-                loop: false,
-                flip: true,
-                playbackRate: true,
-                aspectRatio: true,
-                fullscreen: true,
-                fullscreenWeb: true,
-                subtitleOffset: true,
-                miniProgressBar: true,
-                mutex: true,
-                backdrop: true,
-                playsInline: true,
-                autoPlayback: true,
-                airplay: true,
-                theme: '#3b82f6',
-            });
+            art = new Artplayer({ container: '#artplayer-container', url: url, poster: poster, volume: 0.8, pip: true, autoSize: false, autoMini: true, screenshot: true, setting: true, playbackRate: true, aspectRatio: true, fullscreen: true, playsInline: true, theme: '#3b82f6' });
         }
-
-        function playVideo() {
-            if(art) { art.play(); }
-            document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        function resetUI() {
-            if(art) { art.destroy(); art = null; }
-            document.getElementById('link').value = '';
-            document.getElementById('resultCard').classList.add('hidden');
-            document.getElementById('searchSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
+        
+        function playVideo() { if(art) { art.play(); } document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        
+        function resetUI() { if(art) { art.destroy(); art = null; } document.getElementById('link').value = ''; document.getElementById('resultCard').classList.add('hidden'); document.getElementById('searchSection').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        
         async function getLinks() {
             const link = document.getElementById('link').value.trim();
             if(!link) return;
-
             document.getElementById('loading').classList.remove('hidden');
             document.getElementById('resultCard').classList.add('hidden');
             document.getElementById('error').classList.add('hidden');
             const btn = document.getElementById('searchBtn');
             btn.disabled = true;
-            btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>';
-
+            btn.innerHTML = '...';
             try {
                 const res = await fetch('/api?url=' + encodeURIComponent(link));
                 const data = await res.json();
-
                 document.getElementById('loading').classList.add('hidden');
                 btn.disabled = false;
-                btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg><span>Search</span>';
-
+                btn.innerHTML = 'Search';
+                
                 if(data.status === 'success') {
                     document.getElementById('resultCard').classList.remove('hidden');
-                    
-                    const actualFilename = data.filename || 'TeraBox_Video.mp4';
-                    document.getElementById('filename').innerText = actualFilename;
+                    document.getElementById('filename').innerText = data.filename || 'Video.mp4';
                     document.getElementById('size').innerText = data.size || 'N/A';
-                    
-                    // Proxy URL creation
                     const cIdx = data.cookie_index || 0;
-                    const downloadUrl = "/proxy?url=" + encodeURIComponent(data.download) + "&name=" + encodeURIComponent(actualFilename) + "&cidx=" + cIdx;
-                    const streamUrl = "/proxy?url=" + encodeURIComponent(data.stream) + "&action=play&name=" + encodeURIComponent(actualFilename) + "&cidx=" + cIdx;
                     
-                    document.getElementById('downloadBtn').href = downloadUrl;
-
-                    let bestThumb = '';
-                    if (data.thumbs) {
-                        bestThumb = data.thumbs.url3 || data.thumbs.url2 || data.thumbs.url1 || '';
-                    }
+                    document.getElementById('downloadBtn').href = '/proxy?url=' + encodeURIComponent(data.download) + '&name=' + encodeURIComponent(data.filename || 'Video.mp4') + '&cidx=' + cIdx;
                     
-                    initPlayer(streamUrl, bestThumb);
-
+                    const posterUrl = data.thumbs ? (data.thumbs.url3 || data.thumbs.url2 || data.thumbs.url1) : '';
+                    initPlayer('/proxy?url=' + encodeURIComponent(data.stream) + '&action=play&name=' + encodeURIComponent(data.filename || 'Video.mp4') + '&cidx=' + cIdx, posterUrl);
                 } else {
-                    document.getElementById('errorText').innerText = data.message || data.error || "Failed to fetch video.";
+                    document.getElementById('errorText').innerText = data.error || data.message || 'Error fetching link';
                     document.getElementById('error').classList.remove('hidden');
                 }
-            } catch(e) {
+            } catch(e) { 
                 document.getElementById('loading').classList.add('hidden');
                 btn.disabled = false;
-                btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg><span>Search</span>';
-                document.getElementById('errorText').innerText = "Network Error! Please try again.";
+                btn.innerHTML = 'Search';
+                document.getElementById('errorText').innerText = 'Network Error';
                 document.getElementById('error').classList.remove('hidden');
             }
         }
@@ -293,150 +198,96 @@ Bun.serve({
     const url = new URL(req.url);
     const pathname = url.pathname;
 
-    if (req.method === "OPTIONS") {
-      return new Response(null, { headers: corsHeaders });
-    }
-
-    if (pathname === "/manifest.json") {
-      return new Response(JSON.stringify(manifestJson), {
-        headers: { "Content-Type": "application/json", ...corsHeaders }
-      });
-    }
-
-    if (pathname === "/sw.js") {
-      return new Response(serviceWorkerJs, {
-        headers: { "Content-Type": "application/javascript", ...corsHeaders }
-      });
-    }
-
-    if (pathname === "/") {
-      return new Response(htmlPage, { 
-        headers: { "Content-Type": "text/html", ...corsHeaders } 
-      });
-    }
+    if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+    if (pathname === "/manifest.json") return new Response(JSON.stringify(manifestJson), { headers: { "Content-Type": "application/json", ...corsHeaders } });
+    if (pathname === "/sw.js") return new Response(serviceWorkerJs, { headers: { "Content-Type": "application/javascript", ...corsHeaders } });
+    if (pathname === "/") return new Response(htmlPage, { headers: { "Content-Type": "text/html", ...corsHeaders } });
 
     if (pathname === "/proxy") {
       const targetUrl = url.searchParams.get("url");
       const action = url.searchParams.get("action");
-      const fileNameRaw = url.searchParams.get("name") || "TeraBox_Video.mp4";
-      const safeFileName = fileNameRaw.replace(/"/g, ''); 
+      const safeFileName = (url.searchParams.get("name") || "Video.mp4").replace(/"/g, "");
       
       const VALID_COOKIES = getValidCookies();
       const cIdx = parseInt(url.searchParams.get("cidx") || "0");
       const ndusCookie = VALID_COOKIES[cIdx] || VALID_COOKIES[0] || "";
       
-      if (!targetUrl) return new Response("Missing target URL", { status: 400 });
+      if (!targetUrl) return new Response("Missing URL", { status: 400 });
 
-      const fetchHeaders = new Headers();
-      fetchHeaders.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/145.0.0.0 Safari/537.36");
-      fetchHeaders.set("Referer", "https://terabox.app/");
-      fetchHeaders.set("Origin", "https://terabox.app");
-      
-      if (ndusCookie) {
-        fetchHeaders.set("Cookie", "ndus=" + ndusCookie);
-      }
+      const fHeaders = new Headers();
+      fHeaders.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/145.0.0.0 Safari/537.36");
+      fHeaders.set("Referer", "https://terabox.app/");
+      if (ndusCookie) fHeaders.set("Cookie", "ndus=" + ndusCookie);
       
       const range = req.headers.get("Range");
-      if (range) {
-        fetchHeaders.set("Range", range);
-      }
+      if (range) fHeaders.set("Range", range);
 
       try {
-        const proxyRes = await fetch(targetUrl, { 
-            headers: fetchHeaders, 
-            method: req.method,
-            redirect: "follow" 
-        });
+        const pRes = await fetch(targetUrl, { headers: fHeaders, method: req.method, redirect: "follow" });
         
-        if (!proxyRes.ok) {
-           return new Response(\`Proxy failed with status: \${proxyRes.status}\`, { status: proxyRes.status });
+        // NO ESCAPED BACKTICKS HERE: Simple String Concatenation!
+        if (!pRes.ok) {
+           return new Response("Proxy failed with status: " + pRes.status, { status: pRes.status });
         }
 
-        const resHeaders = new Headers();
+        const rHeaders = new Headers();
         const allowedHeaders = ['content-length', 'content-range', 'accept-ranges', 'content-type'];
-        proxyRes.headers.forEach((value, key) => {
-            if (allowedHeaders.includes(key.toLowerCase())) {
-                resHeaders.set(key, value);
-            }
+        pRes.headers.forEach((value, key) => {
+          if (allowedHeaders.includes(key.toLowerCase())) {
+            rHeaders.set(key, value);
+          }
         });
-        
-        resHeaders.set("Access-Control-Allow-Origin", "*");
+        rHeaders.set("Access-Control-Allow-Origin", "*");
         
         if (action === "play") {
-            if (!resHeaders.has("content-type") || !resHeaders.get("content-type")?.includes("video")) {
-                resHeaders.set("content-type", "video/mp4");
-            }
+          if (!rHeaders.has("content-type") || !rHeaders.get("content-type")?.includes("video")) {
+            rHeaders.set("content-type", "video/mp4");
+          }
         } else {
-            resHeaders.set("content-disposition", 'attachment; filename="' + safeFileName + '"'); 
+          rHeaders.set("content-disposition", 'attachment; filename="' + safeFileName + '"');
         }
 
-        return new Response(proxyRes.body, {
-          status: proxyRes.status,
-          headers: resHeaders
-        });
+        return new Response(pRes.body, { status: pRes.status, headers: rHeaders });
       } catch (e: any) {
-        console.error("Proxy fetch error:", e);
         return new Response("Proxy failed due to network error: " + String(e.message), { status: 500 });
       }
     }
 
     if (pathname === "/api") {
       try {
-        const targetUrlRaw = url.searchParams.get("url");
-        if (!targetUrlRaw || !targetUrlRaw.trim()) {
-          return Response.json({ status: "error", message: "Missing required parameter: url" }, { status: 400, headers: corsHeaders });
-        }
+        const tUrlRaw = url.searchParams.get("url");
+        if (!tUrlRaw || !isValidShareUrl(tUrlRaw)) return Response.json({ status: "error", message: "Invalid URL" }, { status: 400, headers: corsHeaders });
 
-        const targetUrl = targetUrlRaw.trim();
-        if (!targetUrl.startsWith("http") || !isValidShareUrl(targetUrl)) {
-          return Response.json({ status: "error", message: "Invalid TeraBox share URL" }, { status: 400, headers: corsHeaders });
-        }
+        const surl = extractSurl(tUrlRaw);
+        if (!surl) return Response.json({ status: "error", message: "Invalid SURL" }, { status: 400, headers: corsHeaders });
 
-        const surl = extractSurl(targetUrl);
-        if (!surl) {
-          return Response.json({ status: "error", message: "Could not extract surl" }, { status: 400, headers: corsHeaders });
-        }
+        const VALID_COOKIES = getValidCookies();
+        const rIdx = VALID_COOKIES.length > 0 ? Math.floor(Math.random() * VALID_COOKIES.length) : 0;
+        const selCookie = VALID_COOKIES[rIdx] || "";
 
         let data;
         const cached = cache.get(surl);
-        
-        const VALID_COOKIES = getValidCookies();
-        const randomIdx = VALID_COOKIES.length > 0 ? Math.floor(Math.random() * VALID_COOKIES.length) : 0;
-        const selectedCookie = VALID_COOKIES[randomIdx] || "";
-
         if (cached && Date.now() < cached.expiry) {
           data = cached.data;
         } else {
-          // Pass the selected cookie securely
-          data = await tera(surl, selectedCookie);
+          data = await tera(surl, selCookie);
           cache.set(surl, { data, expiry: Date.now() + CACHE_DURATION });
         }
 
-        if (data && data.error) {
-          return Response.json({ status: "error", error: data.error }, { status: 400, headers: corsHeaders });
-        }
+        if (data?.error) return Response.json({ status: "error", error: data.error }, { status: 400, headers: corsHeaders });
 
-        let filename, size, download, thumbs;
-        if (data && data.list && data.list.length > 0) {
-          const firstItem = data.list[0];
-          filename = firstItem.server_filename;
-          size = formatBytes(firstItem.size);
-          download = firstItem.dlink;
-          thumbs = firstItem.thumbs;
-        }
-
+        const item = data?.list?.[0];
         return Response.json({
           status: "success",
-          cookie_index: randomIdx,
-          ...(filename && { filename }),
-          ...(size && { size }),
-          ...(download && { download }),
-          ...(download && { stream: download }),
-          ...(thumbs && { thumbs }),
+          cookie_index: rIdx,
+          filename: item?.server_filename,
+          size: formatBytes(item?.size),
+          download: item?.dlink,
+          stream: item?.dlink,
+          thumbs: item?.thumbs
         }, { headers: corsHeaders });
-
-      } catch (error: any) {
-        return Response.json({ status: "error", message: String(error) }, { status: 500, headers: corsHeaders });
+      } catch (e: any) {
+        return Response.json({ status: "error", message: "Internal Error" }, { status: 500, headers: corsHeaders });
       }
     }
 
@@ -444,4 +295,4 @@ Bun.serve({
   },
 });
 
-console.log(`Bun server running on port ${port}`);
+console.log("Bun server running on port " + port);
