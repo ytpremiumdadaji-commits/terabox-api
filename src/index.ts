@@ -4,12 +4,30 @@ import { isValidShareUrl, extractSurl, formatBytes, loadCookies } from "./lib/ut
 const port = process.env.PORT || 5000;
 
 // ==========================================
-// 🔒 SECURE MULTI-COOKIE POOL
+// 🔒 SECURE MULTI-COOKIE POOL & TRACKER
 // ==========================================
 function getValidCookies() {
     const cookiesObj = loadCookies();
     const rawNdus = cookiesObj["ndus"] || "";
     return rawNdus.split(',').map(c => c.trim()).filter(c => c.length > 20);
+}
+
+// Ye system cookies ki health track karega
+const cookieStats = new Map<string, { uses: number; errors: number; lastActive: string }>();
+
+function recordUse(cookie: string, isError: boolean) {
+    if (!cookie) return;
+    if (!cookieStats.has(cookie)) {
+        cookieStats.set(cookie, { uses: 0, errors: 0, lastActive: "Never" });
+    }
+    const stats = cookieStats.get(cookie)!;
+    if (isError) {
+        stats.errors += 1;
+    } else {
+        stats.uses += 1;
+        // Indian Time ke hisaab se update karega
+        stats.lastActive = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+    }
 }
 
 const cache = new Map<string, { data: any; expiry: number }>();
@@ -29,20 +47,13 @@ const manifestJson = {
   display: "standalone",
   background_color: "#0f172a",
   theme_color: "#3b82f6",
-  icons: [
-    {
-      src: "https://cdn-icons-png.flaticon.com/512/2985/2985679.png",
-      sizes: "512x512",
-      type: "image/png",
-      purpose: "any maskable"
-    }
-  ]
+  icons: [{ src: "https://cdn-icons-png.flaticon.com/512/2985/2985679.png", sizes: "512x512", type: "image/png", purpose: "any maskable" }]
 };
 
 const serviceWorkerJs = "self.addEventListener('install', (e) => { self.skipWaiting(); }); self.addEventListener('fetch', (e) => { });";
 
 // ==========================================
-// 🎨 FRONTEND HTML
+// 🎨 FRONTEND HTML (Main User Page)
 // ==========================================
 const htmlPage = `
 <!DOCTYPE html>
@@ -54,7 +65,6 @@ const htmlPage = `
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2985/2985679.png">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
     <style>
@@ -67,19 +77,16 @@ const htmlPage = `
 </head>
 <body class="text-white min-h-screen flex flex-col items-center py-6 px-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black">
     <div class="max-w-2xl w-full relative z-10">
-        
         <button id="installAppBtn" class="hidden w-full mb-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 transition-all active:scale-95 animate-bounce">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
             Install App to Home Screen
         </button>
-
         <div class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">
                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">TeraBox</span> Player
             </h1>
             <p class="text-slate-400 text-sm md:text-base font-medium">Ultra-Fast Direct CDN Stream. No Ads, No Buffering.</p>
         </div>
-
         <div id="searchSection" class="glass-card rounded-2xl shadow-2xl p-2 flex flex-col sm:flex-row gap-2 mb-8 relative transition-all">
             <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl blur opacity-20"></div>
             <div class="relative flex w-full flex-col sm:flex-row gap-2 z-10">
@@ -95,16 +102,13 @@ const htmlPage = `
                 </button>
             </div>
         </div>
-
         <div id="loading" class="hidden flex flex-col items-center justify-center py-10">
             <div class="w-10 h-10 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin mb-4"></div>
             <p class="text-slate-400 font-medium animate-pulse">Bypassing Servers for Max Speed...</p>
         </div>
-
         <div id="error" class="hidden mb-6 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-xl flex items-center gap-3">
             <p id="errorText" class="text-sm font-medium"></p>
         </div>
-
         <div id="resultCard" class="hidden glass-card rounded-2xl shadow-2xl flex flex-col transform transition-all">
             <div id="artplayer-container" class="artplayer-app bg-black"></div>
             <div class="p-5 sm:p-6 relative">
@@ -144,9 +148,7 @@ const htmlPage = `
             if (art) { art.destroy(); }
             art = new Artplayer({ container: '#artplayer-container', url: url, poster: poster, volume: 0.8, pip: true, autoSize: false, autoMini: true, screenshot: true, setting: true, playbackRate: true, aspectRatio: true, fullscreen: true, playsInline: true, theme: '#3b82f6' });
         }
-        
         function playVideo() { if(art) { art.play(); } document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-        
         function resetUI() { if(art) { art.destroy(); art = null; } document.getElementById('link').value = ''; document.getElementById('resultCard').classList.add('hidden'); document.getElementById('searchSection').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
         
         async function getLinks() {
@@ -170,9 +172,7 @@ const htmlPage = `
                     document.getElementById('filename').innerText = data.filename || 'Video.mp4';
                     document.getElementById('size').innerText = data.size || 'N/A';
                     const cIdx = data.cookie_index || 0;
-                    
                     document.getElementById('downloadBtn').href = '/proxy?url=' + encodeURIComponent(data.download) + '&name=' + encodeURIComponent(data.filename || 'Video.mp4') + '&cidx=' + cIdx;
-                    
                     const posterUrl = data.thumbs ? (data.thumbs.url3 || data.thumbs.url2 || data.thumbs.url1) : '';
                     initPlayer('/proxy?url=' + encodeURIComponent(data.stream) + '&action=play&name=' + encodeURIComponent(data.filename || 'Video.mp4') + '&cidx=' + cIdx, posterUrl);
                 } else {
@@ -203,6 +203,82 @@ Bun.serve({
     if (pathname === "/sw.js") return new Response(serviceWorkerJs, { headers: { "Content-Type": "application/javascript", ...corsHeaders } });
     if (pathname === "/") return new Response(htmlPage, { headers: { "Content-Type": "text/html", ...corsHeaders } });
 
+    // ==========================================
+    // 🛡️ SECRET ADMIN PANEL ROUTE
+    // ==========================================
+    if (pathname === "/admin") {
+        const pass = url.searchParams.get("pass");
+        // Aapka secret password "rishi2026" hai
+        if (pass !== "rishi2026") {
+            return new Response("Unauthorized! Password galat hai.", { status: 401 });
+        }
+
+        const validCookies = getValidCookies();
+        let tableRows = "";
+
+        validCookies.forEach((cookie, index) => {
+            const shortCookie = cookie.substring(0, 10) + ".........." + cookie.substring(cookie.length - 6);
+            const stats = cookieStats.get(cookie) || { uses: 0, errors: 0, lastActive: "Never" };
+            
+            let statusBadge = "<span style='color: #4ade80; font-weight: bold;'>✅ Active</span>";
+            // Agar ek cookie ne lagatar 5 se zyada error diye hain, toh usko block maan liya jayega
+            if (stats.errors > 5) {
+                statusBadge = "<span style='color: #f87171; font-weight: bold;'>⚠️ Blocked/Expired</span>";
+            }
+
+            tableRows += "<tr style='border-bottom: 1px solid #334155;'>";
+            tableRows += "<td style='padding:12px;'>" + (index + 1) + "</td>";
+            tableRows += "<td style='padding:12px; font-family:monospace; color:#94a3b8;'>" + shortCookie + "</td>";
+            tableRows += "<td style='padding:12px;'>" + statusBadge + "</td>";
+            tableRows += "<td style='padding:12px; color:#38bdf8; font-weight:bold;'>" + stats.uses + "</td>";
+            tableRows += "<td style='padding:12px; color:#f87171; font-weight:bold;'>" + stats.errors + "</td>";
+            tableRows += "<td style='padding:12px; font-size:14px;'>" + stats.lastActive + "</td>";
+            tableRows += "</tr>";
+        });
+
+        const adminHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Admin Dashboard - TeraBox Pro</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="background-color: #0f172a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px;">
+            <div style="max-width: 900px; margin: 0 auto;">
+                <h1 style="color: #3b82f6; border-bottom: 2px solid #1e293b; padding-bottom: 10px;">🛡️ Secret Admin Dashboard</h1>
+                <p style="color: #cbd5e1; font-size: 16px;">Yahan aap check kar sakte hain ki aapki kaunsi cookie theek kaam kar rahi hai aur kaunsi fail ho gayi.</p>
+                
+                <div style="background: #1e293b; border-radius: 10px; overflow: hidden; margin-top: 25px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="background: #0f172a;">
+                                <th style="padding:15px; color:#64748b;">#</th>
+                                <th style="padding:15px; color:#64748b;">Secure Cookie</th>
+                                <th style="padding:15px; color:#64748b;">Status</th>
+                                <th style="padding:15px; color:#64748b;">Successful Uses</th>
+                                <th style="padding:15px; color:#64748b;">Fails/Errors</th>
+                                <th style="padding:15px; color:#64748b;">Last Used At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ` + tableRows + `
+                        </tbody>
+                    </table>
+                </div>
+                <p style="margin-top:20px; color:#94a3b8; font-size:14px; background: #1e293b; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                    <strong>Note:</strong> Render ka free server jab sleep hoke dobara start hota hai, tab ye Fails aur Uses zero (0) se reset ho jate hain. Isliye ye aapko hamesha fresh live data dikhayega!
+                </p>
+            </div>
+        </body>
+        </html>
+        `;
+
+        return new Response(adminHtml, { headers: { "Content-Type": "text/html" } });
+    }
+
+    // ==========================================
+    // 🌐 PROXY SYSTEM (With Tracker)
+    // ==========================================
     if (pathname === "/proxy") {
       const targetUrl = url.searchParams.get("url");
       const action = url.searchParams.get("action");
@@ -225,10 +301,12 @@ Bun.serve({
       try {
         const pRes = await fetch(targetUrl, { headers: fHeaders, method: req.method, redirect: "follow" });
         
-        // NO ESCAPED BACKTICKS HERE: Simple String Concatenation!
         if (!pRes.ok) {
+           recordUse(ndusCookie, true); // Tracker: Error
            return new Response("Proxy failed with status: " + pRes.status, { status: pRes.status });
         }
+
+        recordUse(ndusCookie, false); // Tracker: Success
 
         const rHeaders = new Headers();
         const allowedHeaders = ['content-length', 'content-range', 'accept-ranges', 'content-type'];
@@ -249,10 +327,14 @@ Bun.serve({
 
         return new Response(pRes.body, { status: pRes.status, headers: rHeaders });
       } catch (e: any) {
+        recordUse(ndusCookie, true); // Tracker: Network Error
         return new Response("Proxy failed due to network error: " + String(e.message), { status: 500 });
       }
     }
 
+    // ==========================================
+    // 🚀 API ROUTE (With Tracker)
+    // ==========================================
     if (pathname === "/api") {
       try {
         const tUrlRaw = url.searchParams.get("url");
@@ -269,9 +351,15 @@ Bun.serve({
         const cached = cache.get(surl);
         if (cached && Date.now() < cached.expiry) {
           data = cached.data;
+          recordUse(selCookie, false); // Tracker: Success from Cache
         } else {
           data = await tera(surl, selCookie);
-          cache.set(surl, { data, expiry: Date.now() + CACHE_DURATION });
+          if (data?.error) {
+              recordUse(selCookie, true); // Tracker: Error from API
+          } else {
+              recordUse(selCookie, false); // Tracker: Success from API
+              cache.set(surl, { data, expiry: Date.now() + CACHE_DURATION });
+          }
         }
 
         if (data?.error) return Response.json({ status: "error", error: data.error }, { status: 400, headers: corsHeaders });
