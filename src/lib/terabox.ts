@@ -4,7 +4,7 @@ import { isValidShareUrl, extractSurl, formatBytes, loadCookies } from "./lib/ut
 const port = process.env.PORT || 5000;
 
 // ==========================================
-// 🔒 SECURE MULTI-COOKIE POOL (From Render Env)
+// 🔒 SECURE MULTI-COOKIE POOL
 // ==========================================
 function getValidCookies() {
     const cookiesObj = loadCookies();
@@ -42,7 +42,7 @@ const manifestJson = {
 const serviceWorkerJs = "self.addEventListener('install', (e) => { self.skipWaiting(); }); self.addEventListener('fetch', (e) => { });";
 
 // ==========================================
-// 🎨 FRONTEND HTML (No Backticks inside for safety)
+// 🎨 FRONTEND HTML
 // ==========================================
 const htmlPage = `
 <!DOCTYPE html>
@@ -54,6 +54,7 @@ const htmlPage = `
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2985/2985679.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
     <style>
@@ -66,16 +67,19 @@ const htmlPage = `
 </head>
 <body class="text-white min-h-screen flex flex-col items-center py-6 px-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black">
     <div class="max-w-2xl w-full relative z-10">
+        
         <button id="installAppBtn" class="hidden w-full mb-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 transition-all active:scale-95 animate-bounce">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
             Install App to Home Screen
         </button>
+
         <div class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">
                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">TeraBox</span> Player
             </h1>
             <p class="text-slate-400 text-sm md:text-base font-medium">Ultra-Fast Direct CDN Stream. No Ads, No Buffering.</p>
         </div>
+
         <div id="searchSection" class="glass-card rounded-2xl shadow-2xl p-2 flex flex-col sm:flex-row gap-2 mb-8 relative transition-all">
             <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl blur opacity-20"></div>
             <div class="relative flex w-full flex-col sm:flex-row gap-2 z-10">
@@ -91,13 +95,16 @@ const htmlPage = `
                 </button>
             </div>
         </div>
+
         <div id="loading" class="hidden flex flex-col items-center justify-center py-10">
             <div class="w-10 h-10 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin mb-4"></div>
             <p class="text-slate-400 font-medium animate-pulse">Bypassing Servers for Max Speed...</p>
         </div>
+
         <div id="error" class="hidden mb-6 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-xl flex items-center gap-3">
             <p id="errorText" class="text-sm font-medium"></p>
         </div>
+
         <div id="resultCard" class="hidden glass-card rounded-2xl shadow-2xl flex flex-col transform transition-all">
             <div id="artplayer-container" class="artplayer-app bg-black"></div>
             <div class="p-5 sm:p-6 relative">
@@ -131,13 +138,17 @@ const htmlPage = `
         const installBtn = document.getElementById('installAppBtn');
         window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; installBtn.classList.remove('hidden'); });
         installBtn.addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; installBtn.classList.add('hidden'); } });
+        
         let art = null;
         function initPlayer(url, poster) {
             if (art) { art.destroy(); }
             art = new Artplayer({ container: '#artplayer-container', url: url, poster: poster, volume: 0.8, pip: true, autoSize: false, autoMini: true, screenshot: true, setting: true, playbackRate: true, aspectRatio: true, fullscreen: true, playsInline: true, theme: '#3b82f6' });
         }
+        
         function playVideo() { if(art) { art.play(); } document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-        function resetUI() { if(art) { art.destroy(); art = null; } document.getElementById('link').value = ''; document.getElementById('resultCard').classList.add('hidden'); }
+        
+        function resetUI() { if(art) { art.destroy(); art = null; } document.getElementById('link').value = ''; document.getElementById('resultCard').classList.add('hidden'); document.getElementById('searchSection').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        
         async function getLinks() {
             const link = document.getElementById('link').value.trim();
             if(!link) return;
@@ -153,20 +164,25 @@ const htmlPage = `
                 document.getElementById('loading').classList.add('hidden');
                 btn.disabled = false;
                 btn.innerHTML = 'Search';
+                
                 if(data.status === 'success') {
                     document.getElementById('resultCard').classList.remove('hidden');
                     document.getElementById('filename').innerText = data.filename || 'Video.mp4';
                     document.getElementById('size').innerText = data.size || 'N/A';
                     const cIdx = data.cookie_index || 0;
-                    document.getElementById('downloadBtn').href = '/proxy?url=' + encodeURIComponent(data.download) + '&name=' + encodeURIComponent(data.filename) + '&cidx=' + cIdx;
-                    initPlayer('/proxy?url=' + encodeURIComponent(data.stream) + '&action=play&name=' + encodeURIComponent(data.filename) + '&cidx=' + cIdx, (data.thumbs ? (data.thumbs.url3 || data.thumbs.url2 || data.thumbs.url1) : ''));
+                    
+                    document.getElementById('downloadBtn').href = '/proxy?url=' + encodeURIComponent(data.download) + '&name=' + encodeURIComponent(data.filename || 'Video.mp4') + '&cidx=' + cIdx;
+                    
+                    const posterUrl = data.thumbs ? (data.thumbs.url3 || data.thumbs.url2 || data.thumbs.url1) : '';
+                    initPlayer('/proxy?url=' + encodeURIComponent(data.stream) + '&action=play&name=' + encodeURIComponent(data.filename || 'Video.mp4') + '&cidx=' + cIdx, posterUrl);
                 } else {
-                    document.getElementById('errorText').innerText = data.error || 'Error fetching link';
+                    document.getElementById('errorText').innerText = data.error || data.message || 'Error fetching link';
                     document.getElementById('error').classList.remove('hidden');
                 }
             } catch(e) { 
                 document.getElementById('loading').classList.add('hidden');
                 btn.disabled = false;
+                btn.innerHTML = 'Search';
                 document.getElementById('errorText').innerText = 'Network Error';
                 document.getElementById('error').classList.remove('hidden');
             }
@@ -208,22 +224,32 @@ Bun.serve({
 
       try {
         const pRes = await fetch(targetUrl, { headers: fHeaders, method: req.method, redirect: "follow" });
+        
+        // NO ESCAPED BACKTICKS HERE: Simple String Concatenation!
+        if (!pRes.ok) {
+           return new Response("Proxy failed with status: " + pRes.status, { status: pRes.status });
+        }
+
         const rHeaders = new Headers();
-        ['content-length', 'content-range', 'accept-ranges', 'content-type'].forEach(h => {
-          if (pRes.headers.has(h)) rHeaders.set(h, pRes.headers.get(h)!);
+        const allowedHeaders = ['content-length', 'content-range', 'accept-ranges', 'content-type'];
+        pRes.headers.forEach((value, key) => {
+          if (allowedHeaders.includes(key.toLowerCase())) {
+            rHeaders.set(key, value);
+          }
         });
         rHeaders.set("Access-Control-Allow-Origin", "*");
         
         if (action === "play") {
-          if (!rHeaders.get("content-type")?.includes("video")) rHeaders.set("content-type", "video/mp4");
+          if (!rHeaders.has("content-type") || !rHeaders.get("content-type")?.includes("video")) {
+            rHeaders.set("content-type", "video/mp4");
+          }
         } else {
           rHeaders.set("content-disposition", 'attachment; filename="' + safeFileName + '"');
         }
 
         return new Response(pRes.body, { status: pRes.status, headers: rHeaders });
       } catch (e: any) {
-        // Fix: No escaped backticks here!
-        return new Response("Proxy failed with status: 500", { status: 500 });
+        return new Response("Proxy failed due to network error: " + String(e.message), { status: 500 });
       }
     }
 
@@ -236,7 +262,7 @@ Bun.serve({
         if (!surl) return Response.json({ status: "error", message: "Invalid SURL" }, { status: 400, headers: corsHeaders });
 
         const VALID_COOKIES = getValidCookies();
-        const rIdx = Math.floor(Math.random() * VALID_COOKIES.length);
+        const rIdx = VALID_COOKIES.length > 0 ? Math.floor(Math.random() * VALID_COOKIES.length) : 0;
         const selCookie = VALID_COOKIES[rIdx] || "";
 
         let data;
@@ -269,4 +295,4 @@ Bun.serve({
   },
 });
 
-console.log(`Bun server running on port ${port}`);
+console.log("Bun server running on port " + port);
