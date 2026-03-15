@@ -385,3 +385,73 @@ Bun.serve({
 });
 
 console.log("Bun server running on port " + port);
+
+// ==========================================
+// 🤖 TELEGRAM BOT INTEGRATION
+// ==========================================
+import TelegramBot from 'node-telegram-bot-api';
+
+const botToken = process.env.TELEGRAM_BOT_TOKEN;
+
+if (botToken) {
+    const bot = new TelegramBot(botToken, { polling: true });
+
+    console.log("Telegram Bot is running...");
+
+    bot.onText(/\/start/, (msg) => {
+        const chatId = msg.chat.id;
+        const welcomeMsg = "👋 Welcome to TeraBox Pro Bot!\n\nMujhe koi bhi TeraBox ka link bhejiye aur main aapko direct fast streaming aur download link dunga.";
+        bot.sendMessage(chatId, welcomeMsg);
+    });
+
+    bot.onText(/(https?:\/\/[^\s]+)/g, async (msg, match) => {
+        const chatId = msg.chat.id;
+        const url = match ? match[1] : "";
+
+        if (!url.includes("tera") && !url.includes("1drv") && !url.includes("box")) return;
+
+        const sentMsg = await bot.sendMessage(chatId, "⏳ Bypassing TeraBox Servers... Please wait.");
+
+        try {
+            const apiUrl = "http://localhost:" + port + "/api?url=" + encodeURIComponent(url);
+            const res = await fetch(apiUrl);
+            const data = await res.json();
+
+            if (data.status === "success") {
+                const cIdx = data.cookie_index || 0;
+                const fileName = data.filename || "Video.mp4";
+                
+                // Aapki website ka link
+                const baseUrl = "https://terabox-api-vu14.onrender.com";
+                
+                const streamUrl = baseUrl + "/proxy?url=" + encodeURIComponent(data.stream) + "&action=play&name=" + encodeURIComponent(fileName) + "&cidx=" + cIdx;
+                const downloadUrl = baseUrl + "/proxy?url=" + encodeURIComponent(data.download) + "&name=" + encodeURIComponent(fileName) + "&cidx=" + cIdx;
+
+                const options = {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: "🎬 Watch Online Faster", url: streamUrl }],
+                            [{ text: "⬇️ Download Fast", url: downloadUrl }]
+                        ]
+                    }
+                };
+
+                const successText = "✅ **File:** " + fileName + "\n📦 **Size:** " + data.size + "\n\nNiche diye gaye buttons par click karein:";
+                
+                bot.editMessageText(successText, { 
+                    chat_id: chatId, 
+                    message_id: sentMsg.message_id,
+                    reply_markup: options.reply_markup,
+                    parse_mode: "Markdown"
+                });
+
+            } else {
+                bot.editMessageText("❌ Error: " + (data.message || data.error), { chat_id: chatId, message_id: sentMsg.message_id });
+            }
+        } catch (e: any) {
+            bot.editMessageText("❌ Network error. Please try again later.", { chat_id: chatId, message_id: sentMsg.message_id });
+        }
+    });
+} else {
+    console.log("TELEGRAM_BOT_TOKEN is missing. Bot is not started.");
+}
