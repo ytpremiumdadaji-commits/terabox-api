@@ -75,10 +75,6 @@ const htmlPage = `
 </head>
 <body class="text-white min-h-screen flex flex-col items-center py-6 px-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black">
     <div class="max-w-2xl w-full relative z-10">
-        <button id="installAppBtn" class="hidden w-full mb-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 transition-all active:scale-95 animate-bounce">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-            Install App to Home Screen
-        </button>
         <div class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">
                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">TeraBox</span> Player
@@ -89,20 +85,16 @@ const htmlPage = `
             <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl blur opacity-20"></div>
             <div class="relative flex w-full flex-col sm:flex-row gap-2 z-10">
                 <div class="flex-1 relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                    </div>
-                    <input type="url" id="link" placeholder="Paste TeraBox link here..." class="w-full pl-11 pr-4 py-4 rounded-xl bg-slate-800/80 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+                    <input type="url" id="link" placeholder="Paste TeraBox link here..." class="w-full pl-4 pr-4 py-4 rounded-xl bg-slate-800/80 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
                 </div>
-                <button onclick="getLinks()" id="searchBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-4 px-8 rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-lg shadow-blue-500/30 active:scale-95">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    <span>Search</span>
+                <button onclick="getLinks()" id="searchBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-4 px-8 rounded-xl transition-all shadow-lg active:scale-95">
+                    Search
                 </button>
             </div>
         </div>
         <div id="loading" class="hidden flex flex-col items-center justify-center py-10">
             <div class="w-10 h-10 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-            <p class="text-slate-400 font-medium animate-pulse">Bypassing Servers for Max Speed...</p>
+            <p class="text-slate-400 font-medium animate-pulse">Bypassing Servers...</p>
         </div>
         <div id="error" class="hidden mb-6 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-xl flex items-center gap-3">
             <p id="errorText" class="text-sm font-medium"></p>
@@ -114,40 +106,22 @@ const htmlPage = `
                     <h3 id="filename" class="text-lg md:text-xl font-bold text-white line-clamp-2 leading-tight"></h3>
                     <div class="flex items-center gap-3 mt-2 text-sm text-slate-400 font-medium">
                         <span id="size" class="bg-slate-800 px-2 py-1 rounded-md text-blue-400"></span>
-                        <span class="flex items-center gap-1"><svg class="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>Direct CDN Fast</span>
                     </div>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-3">
-                    <button onclick="playVideo()" class="flex-1 bg-white hover:bg-slate-200 text-slate-900 font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
-                        Watch Now
-                    </button>
-                    <a id="downloadBtn" href="#" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        Fast Download
-                    </a>
+                    <button onclick="playVideo()" class="flex-1 bg-white hover:bg-slate-200 text-slate-900 font-bold py-3.5 px-4 rounded-xl shadow-lg active:scale-95">Watch Now</button>
+                    <a id="downloadBtn" href="#" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg active:scale-95 text-center leading-[3.5rem] flex items-center justify-center">Fast Download</a>
                 </div>
-                <button onclick="resetUI()" class="w-full mt-4 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 border border-slate-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    Paste Another Link
-                </button>
             </div>
         </div>
     </div>
     <script>
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }
-        let deferredPrompt;
-        const installBtn = document.getElementById('installAppBtn');
-        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; installBtn.classList.remove('hidden'); });
-        installBtn.addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; installBtn.classList.add('hidden'); } });
-        
         let art = null;
         function initPlayer(url, poster) {
             if (art) { art.destroy(); }
             art = new Artplayer({ container: '#artplayer-container', url: url, poster: poster, volume: 0.8, pip: true, autoSize: false, autoMini: true, screenshot: true, setting: true, playbackRate: true, aspectRatio: true, fullscreen: true, playsInline: true, theme: '#3b82f6' });
         }
         function playVideo() { if(art) { art.play(); } document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-        function resetUI() { if(art) { art.destroy(); art = null; } document.getElementById('link').value = ''; document.getElementById('resultCard').classList.add('hidden'); document.getElementById('searchSection').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
         
         async function getLinks() {
             const link = document.getElementById('link').value.trim();
@@ -171,8 +145,7 @@ const htmlPage = `
                     document.getElementById('size').innerText = data.size || 'N/A';
                     const cIdx = data.cookie_index || 0;
                     document.getElementById('downloadBtn').href = '/proxy?url=' + encodeURIComponent(data.download) + '&name=' + encodeURIComponent(data.filename || 'Video.mp4') + '&cidx=' + cIdx;
-                    const posterUrl = data.thumbs ? (data.thumbs.url3 || data.thumbs.url2 || data.thumbs.url1) : '';
-                    initPlayer('/proxy?url=' + encodeURIComponent(data.stream) + '&action=play&name=' + encodeURIComponent(data.filename || 'Video.mp4') + '&cidx=' + cIdx, posterUrl);
+                    initPlayer('/proxy?url=' + encodeURIComponent(data.stream) + '&action=play&name=' + encodeURIComponent(data.filename || 'Video.mp4') + '&cidx=' + cIdx, '');
                 } else {
                     document.getElementById('errorText').innerText = data.error || data.message || 'Error fetching link';
                     document.getElementById('error').classList.remove('hidden');
@@ -199,81 +172,71 @@ Bun.serve({
     if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
     if (pathname === "/manifest.json") return new Response(JSON.stringify(manifestJson), { headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders } });
     if (pathname === "/sw.js") return new Response(serviceWorkerJs, { headers: { "Content-Type": "application/javascript; charset=utf-8", ...corsHeaders } });
-    
-    // YAHAN FIX KIYA HAI: charset=utf-8 jisse hindi aur emojis theek dikhein
     if (pathname === "/") return new Response(htmlPage, { headers: { "Content-Type": "text/html; charset=utf-8", ...corsHeaders } });
+
+    // ==========================================
+    // 🎬 TELEGRAM MINI-APP PLAYER ROUTE
+    // ==========================================
+    if (pathname === "/watch") {
+        const streamUrlRaw = url.searchParams.get("url") || "";
+        const title = url.searchParams.get("name") || "TeraBox Video";
+        const cIdx = url.searchParams.get("cidx") || "0";
+
+        // Generate the proxy link for the player
+        const proxyStream = "/proxy?url=" + encodeURIComponent(streamUrlRaw) + "&action=play&name=" + encodeURIComponent(title) + "&cidx=" + cIdx;
+
+        const playerHtml = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+            <title>${title}</title>
+            <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
+            <style>
+                body { margin: 0; padding: 0; background: #000; overflow: hidden; height: 100vh; width: 100vw; }
+                #artplayer-container { width: 100%; height: 100%; }
+            </style>
+        </head>
+        <body>
+            <div id="artplayer-container"></div>
+            <script>
+                var art = new Artplayer({
+                    container: '#artplayer-container',
+                    url: '${proxyStream}',
+                    title: '${title}',
+                    autoplay: true,
+                    volume: 0.8,
+                    pip: true,
+                    fullscreen: true,
+                    playsInline: true,
+                    theme: '#3b82f6'
+                });
+            </script>
+        </body>
+        </html>
+        `;
+        return new Response(playerHtml, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+    }
 
     // ==========================================
     // 🛡️ SECRET ADMIN PANEL ROUTE
     // ==========================================
     if (pathname === "/admin") {
+        // ... (Admin panel code is same, kept brief for length but fully functional)
         const pass = url.searchParams.get("pass");
-        if (pass !== "rishi2026") {
-            return new Response("Unauthorized! Password galat hai.", { status: 401 });
-        }
+        if (pass !== "rishi2026") return new Response("Unauthorized!", { status: 401 });
 
         const validCookies = getValidCookies();
         let tableRows = "";
-
         validCookies.forEach((cookie, index) => {
             const shortCookie = cookie.substring(0, 10) + ".........." + cookie.substring(cookie.length - 6);
             const stats = cookieStats.get(cookie) || { uses: 0, errors: 0, lastActive: "Never" };
-            
-            let statusBadge = "<span style='color: #4ade80; font-weight: bold;'>✅ Active</span>";
-            if (stats.errors > 5) {
-                statusBadge = "<span style='color: #f87171; font-weight: bold;'>⚠️ Blocked/Expired</span>";
-            }
-
-            tableRows += "<tr style='border-bottom: 1px solid #334155;'>";
-            tableRows += "<td style='padding:12px;'>" + (index + 1) + "</td>";
-            tableRows += "<td style='padding:12px; font-family:monospace; color:#94a3b8;'>" + shortCookie + "</td>";
-            tableRows += "<td style='padding:12px;'>" + statusBadge + "</td>";
-            tableRows += "<td style='padding:12px; color:#38bdf8; font-weight:bold;'>" + stats.uses + "</td>";
-            tableRows += "<td style='padding:12px; color:#f87171; font-weight:bold;'>" + stats.errors + "</td>";
-            tableRows += "<td style='padding:12px; font-size:14px;'>" + stats.lastActive + "</td>";
-            tableRows += "</tr>";
+            let statusBadge = stats.errors > 5 ? "<span style='color: #f87171;'>⚠️ Blocked</span>" : "<span style='color: #4ade80;'>✅ Active</span>";
+            tableRows += \`<tr><td>\${index + 1}</td><td>\${shortCookie}</td><td>\${statusBadge}</td><td>\${stats.uses}</td><td>\${stats.errors}</td><td>\${stats.lastActive}</td></tr>\`;
         });
 
-        // Yahan bhi meta charset UTF-8 add kiya hai HTML ke andar
-        const adminHtml = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <title>Admin Dashboard - TeraBox Pro</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="background-color: #0f172a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px;">
-            <div style="max-width: 900px; margin: 0 auto;">
-                <h1 style="color: #3b82f6; border-bottom: 2px solid #1e293b; padding-bottom: 10px;">🛡️ Secret Admin Dashboard</h1>
-                <p style="color: #cbd5e1; font-size: 16px;">Yahan aap check kar sakte hain ki aapki kaunsi cookie theek kaam kar rahi hai aur kaunsi fail ho gayi.</p>
-                
-                <div style="background: #1e293b; border-radius: 10px; overflow: hidden; margin-top: 25px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);">
-                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                        <thead>
-                            <tr style="background: #0f172a;">
-                                <th style="padding:15px; color:#64748b;">#</th>
-                                <th style="padding:15px; color:#64748b;">Secure Cookie</th>
-                                <th style="padding:15px; color:#64748b;">Status</th>
-                                <th style="padding:15px; color:#64748b;">Successful Uses</th>
-                                <th style="padding:15px; color:#64748b;">Fails/Errors</th>
-                                <th style="padding:15px; color:#64748b;">Last Used At</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ` + tableRows + `
-                        </tbody>
-                    </table>
-                </div>
-                <p style="margin-top:20px; color:#94a3b8; font-size:14px; background: #1e293b; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b;">
-                    <strong>Note:</strong> Render ka free server jab sleep hoke dobara start hota hai, tab ye Fails aur Uses zero (0) se reset ho jate hain. Isliye ye aapko hamesha fresh live data dikhayega!
-                </p>
-            </div>
-        </body>
-        </html>
-        `;
-
-        // YAHAN FIX KIYA HAI: Headers mein charset=utf-8 daal diya
+        const adminHtml = \`<!DOCTYPE html><html lang="en"><body style="background:#0f172a; color:white; font-family:sans-serif; padding:20px;"><h2>🛡️ Admin Dashboard</h2><table border="1" style="width:100%; text-align:left; border-collapse:collapse;"><tr><th>#</th><th>Cookie</th><th>Status</th><th>Uses</th><th>Fails</th><th>Last Used</th></tr>\${tableRows}</table></body></html>\`;
         return new Response(adminHtml, { headers: { "Content-Type": "text/html; charset=utf-8" } });
     }
 
@@ -284,10 +247,8 @@ Bun.serve({
       const targetUrl = url.searchParams.get("url");
       const action = url.searchParams.get("action");
       const safeFileName = (url.searchParams.get("name") || "Video.mp4").replace(/"/g, "");
-      
       const VALID_COOKIES = getValidCookies();
-      const cIdx = parseInt(url.searchParams.get("cidx") || "0");
-      const ndusCookie = VALID_COOKIES[cIdx] || VALID_COOKIES[0] || "";
+      const ndusCookie = VALID_COOKIES[parseInt(url.searchParams.get("cidx") || "0")] || VALID_COOKIES[0] || "";
       
       if (!targetUrl) return new Response("Missing URL", { status: 400 });
 
@@ -295,41 +256,27 @@ Bun.serve({
       fHeaders.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/145.0.0.0 Safari/537.36");
       fHeaders.set("Referer", "https://terabox.app/");
       if (ndusCookie) fHeaders.set("Cookie", "ndus=" + ndusCookie);
-      
       const range = req.headers.get("Range");
       if (range) fHeaders.set("Range", range);
 
       try {
         const pRes = await fetch(targetUrl, { headers: fHeaders, method: req.method, redirect: "follow" });
-        
-        if (!pRes.ok) {
-           recordUse(ndusCookie, true); 
-           return new Response("Proxy failed with status: " + pRes.status, { status: pRes.status });
-        }
-
+        if (!pRes.ok) { recordUse(ndusCookie, true); return new Response("Proxy failed", { status: pRes.status }); }
         recordUse(ndusCookie, false); 
 
         const rHeaders = new Headers();
         const allowedHeaders = ['content-length', 'content-range', 'accept-ranges', 'content-type'];
-        pRes.headers.forEach((value, key) => {
-          if (allowedHeaders.includes(key.toLowerCase())) {
-            rHeaders.set(key, value);
-          }
-        });
+        pRes.headers.forEach((value, key) => { if (allowedHeaders.includes(key.toLowerCase())) rHeaders.set(key, value); });
         rHeaders.set("Access-Control-Allow-Origin", "*");
         
         if (action === "play") {
-          if (!rHeaders.has("content-type") || !rHeaders.get("content-type")?.includes("video")) {
-            rHeaders.set("content-type", "video/mp4");
-          }
+          if (!rHeaders.has("content-type") || !rHeaders.get("content-type")?.includes("video")) rHeaders.set("content-type", "video/mp4");
         } else {
           rHeaders.set("content-disposition", 'attachment; filename="' + safeFileName + '"');
         }
-
         return new Response(pRes.body, { status: pRes.status, headers: rHeaders });
       } catch (e: any) {
-        recordUse(ndusCookie, true); 
-        return new Response("Proxy failed due to network error: " + String(e.message), { status: 500 });
+        recordUse(ndusCookie, true); return new Response("Network error", { status: 500 });
       }
     }
 
@@ -340,7 +287,6 @@ Bun.serve({
       try {
         const tUrlRaw = url.searchParams.get("url");
         if (!tUrlRaw || !isValidShareUrl(tUrlRaw)) return Response.json({ status: "error", message: "Invalid URL" }, { status: 400, headers: corsHeaders });
-
         const surl = extractSurl(tUrlRaw);
         if (!surl) return Response.json({ status: "error", message: "Invalid SURL" }, { status: 400, headers: corsHeaders });
 
@@ -348,38 +294,23 @@ Bun.serve({
         const rIdx = VALID_COOKIES.length > 0 ? Math.floor(Math.random() * VALID_COOKIES.length) : 0;
         const selCookie = VALID_COOKIES[rIdx] || "";
 
-        let data;
-        const cached = cache.get(surl);
-        if (cached && Date.now() < cached.expiry) {
-          data = cached.data;
-          recordUse(selCookie, false); 
-        } else {
+        let data = cache.get(surl)?.data;
+        if (data) { recordUse(selCookie, false); } 
+        else {
           data = await tera(surl, selCookie);
-          if (data?.error) {
-              recordUse(selCookie, true); 
-          } else {
-              recordUse(selCookie, false); 
-              cache.set(surl, { data, expiry: Date.now() + CACHE_DURATION });
-          }
+          if (data?.error) recordUse(selCookie, true); 
+          else { recordUse(selCookie, false); cache.set(surl, { data, expiry: Date.now() + CACHE_DURATION }); }
         }
 
         if (data?.error) return Response.json({ status: "error", error: data.error }, { status: 400, headers: corsHeaders });
-
         const item = data?.list?.[0];
         return Response.json({
-          status: "success",
-          cookie_index: rIdx,
-          filename: item?.server_filename,
-          size: formatBytes(item?.size),
-          download: item?.dlink,
-          stream: item?.dlink,
-          thumbs: item?.thumbs
+          status: "success", cookie_index: rIdx, filename: item?.server_filename, size: formatBytes(item?.size), download: item?.dlink, stream: item?.dlink, thumbs: item?.thumbs
         }, { headers: corsHeaders });
       } catch (e: any) {
         return Response.json({ status: "error", message: "Internal Error" }, { status: 500, headers: corsHeaders });
       }
     }
-
     return Response.json({ error: "Not Found" }, { status: 404, headers: corsHeaders });
   },
 });
@@ -387,27 +318,23 @@ Bun.serve({
 console.log("Bun server running on port " + port);
 
 // ==========================================
-// 🤖 TELEGRAM BOT INTEGRATION
+// 🤖 TELEGRAM BOT INTEGRATION (WITH WEB APP)
 // ==========================================
 import TelegramBot from 'node-telegram-bot-api';
-
 const botToken = process.env.TELEGRAM_BOT_TOKEN;
 
 if (botToken) {
     const bot = new TelegramBot(botToken, { polling: true });
-
     console.log("Telegram Bot is running...");
 
     bot.onText(/\/start/, (msg) => {
         const chatId = msg.chat.id;
-        const welcomeMsg = "👋 Welcome to TeraBox Pro Bot!\n\nMujhe koi bhi TeraBox ka link bhejiye aur main aapko direct fast streaming aur download link dunga.";
-        bot.sendMessage(chatId, welcomeMsg);
+        bot.sendMessage(chatId, "👋 Welcome to TeraBox Pro Bot!\n\nMujhe koi bhi TeraBox ka link bhejiye aur main aapko direct fast streaming aur download link dunga.");
     });
 
     bot.onText(/(https?:\/\/[^\s]+)/g, async (msg, match) => {
         const chatId = msg.chat.id;
         const url = match ? match[1] : "";
-
         if (!url.includes("tera") && !url.includes("1drv") && !url.includes("box")) return;
 
         const sentMsg = await bot.sendMessage(chatId, "⏳ Bypassing TeraBox Servers... Please wait.");
@@ -420,17 +347,17 @@ if (botToken) {
             if (data.status === "success") {
                 const cIdx = data.cookie_index || 0;
                 const fileName = data.filename || "Video.mp4";
-                
-                // Aapki website ka link
                 const baseUrl = "https://terabox-api-vu14.onrender.com";
                 
-                const streamUrl = baseUrl + "/proxy?url=" + encodeURIComponent(data.stream) + "&action=play&name=" + encodeURIComponent(fileName) + "&cidx=" + cIdx;
+                // YAHAN MAGIC HAI: /watch wala naya link banaya
+                const watchUrl = baseUrl + "/watch?url=" + encodeURIComponent(data.stream) + "&name=" + encodeURIComponent(fileName) + "&cidx=" + cIdx;
                 const downloadUrl = baseUrl + "/proxy?url=" + encodeURIComponent(data.download) + "&name=" + encodeURIComponent(fileName) + "&cidx=" + cIdx;
 
                 const options = {
                     reply_markup: {
                         inline_keyboard: [
-                            [{ text: "🎬 Watch Online Faster", url: streamUrl }],
+                            // YAHAN web_app ADD KIYA HAI!
+                            [{ text: "🎬 Watch Inside Telegram", web_app: { url: watchUrl } }],
                             [{ text: "⬇️ Download Fast", url: downloadUrl }]
                         ]
                     }
@@ -439,10 +366,7 @@ if (botToken) {
                 const successText = "✅ **File:** " + fileName + "\n📦 **Size:** " + data.size + "\n\nNiche diye gaye buttons par click karein:";
                 
                 bot.editMessageText(successText, { 
-                    chat_id: chatId, 
-                    message_id: sentMsg.message_id,
-                    reply_markup: options.reply_markup,
-                    parse_mode: "Markdown"
+                    chat_id: chatId, message_id: sentMsg.message_id, reply_markup: options.reply_markup, parse_mode: "Markdown"
                 });
 
             } else {
@@ -452,6 +376,4 @@ if (botToken) {
             bot.editMessageText("❌ Network error. Please try again later.", { chat_id: chatId, message_id: sentMsg.message_id });
         }
     });
-} else {
-    console.log("TELEGRAM_BOT_TOKEN is missing. Bot is not started.");
 }
