@@ -182,40 +182,38 @@ Bun.serve({
         const title = url.searchParams.get("name") || "TeraBox Video";
         const cIdx = url.searchParams.get("cidx") || "0";
 
-        // Generate the proxy link for the player
         const proxyStream = "/proxy?url=" + encodeURIComponent(streamUrlRaw) + "&action=play&name=" + encodeURIComponent(title) + "&cidx=" + cIdx;
 
-        const playerHtml = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-            <title>${title}</title>
-            <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
-            <style>
-                body { margin: 0; padding: 0; background: #000; overflow: hidden; height: 100vh; width: 100vw; }
-                #artplayer-container { width: 100%; height: 100%; }
-            </style>
-        </head>
-        <body>
-            <div id="artplayer-container"></div>
-            <script>
-                var art = new Artplayer({
-                    container: '#artplayer-container',
-                    url: '${proxyStream}',
-                    title: '${title}',
-                    autoplay: true,
-                    volume: 0.8,
-                    pip: true,
-                    fullscreen: true,
-                    playsInline: true,
-                    theme: '#3b82f6'
-                });
-            </script>
-        </body>
-        </html>
-        `;
+        const playerHtml = "<!DOCTYPE html>\n" +
+        "<html lang='en'>\n" +
+        "<head>\n" +
+        "    <meta charset='UTF-8'>\n" +
+        "    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>\n" +
+        "    <title>" + title + "</title>\n" +
+        "    <script src='https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js'></script>\n" +
+        "    <style>\n" +
+        "        body { margin: 0; padding: 0; background: #000; overflow: hidden; height: 100vh; width: 100vw; }\n" +
+        "        #artplayer-container { width: 100%; height: 100%; }\n" +
+        "    </style>\n" +
+        "</head>\n" +
+        "<body>\n" +
+        "    <div id='artplayer-container'></div>\n" +
+        "    <script>\n" +
+        "        var art = new Artplayer({\n" +
+        "            container: '#artplayer-container',\n" +
+        "            url: '" + proxyStream + "',\n" +
+        "            title: '" + title + "',\n" +
+        "            autoplay: true,\n" +
+        "            volume: 0.8,\n" +
+        "            pip: true,\n" +
+        "            fullscreen: true,\n" +
+        "            playsInline: true,\n" +
+        "            theme: '#3b82f6'\n" +
+        "        });\n" +
+        "    </script>\n" +
+        "</body>\n" +
+        "</html>";
+
         return new Response(playerHtml, { headers: { "Content-Type": "text/html; charset=utf-8" } });
     }
 
@@ -223,20 +221,27 @@ Bun.serve({
     // 🛡️ SECRET ADMIN PANEL ROUTE
     // ==========================================
     if (pathname === "/admin") {
-        // ... (Admin panel code is same, kept brief for length but fully functional)
         const pass = url.searchParams.get("pass");
         if (pass !== "rishi2026") return new Response("Unauthorized!", { status: 401 });
 
         const validCookies = getValidCookies();
         let tableRows = "";
+        
         validCookies.forEach((cookie, index) => {
             const shortCookie = cookie.substring(0, 10) + ".........." + cookie.substring(cookie.length - 6);
             const stats = cookieStats.get(cookie) || { uses: 0, errors: 0, lastActive: "Never" };
             let statusBadge = stats.errors > 5 ? "<span style='color: #f87171;'>⚠️ Blocked</span>" : "<span style='color: #4ade80;'>✅ Active</span>";
-            tableRows += \`<tr><td>\${index + 1}</td><td>\${shortCookie}</td><td>\${statusBadge}</td><td>\${stats.uses}</td><td>\${stats.errors}</td><td>\${stats.lastActive}</td></tr>\`;
+            
+            tableRows += "<tr><td style='padding:12px; border-bottom:1px solid #334155;'>" + (index + 1) + "</td>" +
+                         "<td style='padding:12px; border-bottom:1px solid #334155; color:#94a3b8; font-family:monospace;'>" + shortCookie + "</td>" +
+                         "<td style='padding:12px; border-bottom:1px solid #334155;'>" + statusBadge + "</td>" +
+                         "<td style='padding:12px; border-bottom:1px solid #334155; color:#38bdf8; font-weight:bold;'>" + stats.uses + "</td>" +
+                         "<td style='padding:12px; border-bottom:1px solid #334155; color:#f87171; font-weight:bold;'>" + stats.errors + "</td>" +
+                         "<td style='padding:12px; border-bottom:1px solid #334155;'>" + stats.lastActive + "</td></tr>";
         });
 
-        const adminHtml = \`<!DOCTYPE html><html lang="en"><body style="background:#0f172a; color:white; font-family:sans-serif; padding:20px;"><h2>🛡️ Admin Dashboard</h2><table border="1" style="width:100%; text-align:left; border-collapse:collapse;"><tr><th>#</th><th>Cookie</th><th>Status</th><th>Uses</th><th>Fails</th><th>Last Used</th></tr>\${tableRows}</table></body></html>\`;
+        const adminHtml = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Admin Dashboard</title></head><body style='background:#0f172a; color:white; font-family:sans-serif; padding:20px;'><div style='max-width:900px; margin:0 auto;'><h2>🛡️ Admin Dashboard</h2><table style='width:100%; text-align:left; border-collapse:collapse; background:#1e293b; border-radius:10px; overflow:hidden;'><tr style='background:#020617;'><th>#</th><th>Cookie</th><th>Status</th><th>Uses</th><th>Fails</th><th>Last Used</th></tr>" + tableRows + "</table></div></body></html>";
+        
         return new Response(adminHtml, { headers: { "Content-Type": "text/html; charset=utf-8" } });
     }
 
@@ -349,14 +354,12 @@ if (botToken) {
                 const fileName = data.filename || "Video.mp4";
                 const baseUrl = "https://terabox-api-vu14.onrender.com";
                 
-                // YAHAN MAGIC HAI: /watch wala naya link banaya
                 const watchUrl = baseUrl + "/watch?url=" + encodeURIComponent(data.stream) + "&name=" + encodeURIComponent(fileName) + "&cidx=" + cIdx;
                 const downloadUrl = baseUrl + "/proxy?url=" + encodeURIComponent(data.download) + "&name=" + encodeURIComponent(fileName) + "&cidx=" + cIdx;
 
                 const options = {
                     reply_markup: {
                         inline_keyboard: [
-                            // YAHAN web_app ADD KIYA HAI!
                             [{ text: "🎬 Watch Inside Telegram", web_app: { url: watchUrl } }],
                             [{ text: "⬇️ Download Fast", url: downloadUrl }]
                         ]
